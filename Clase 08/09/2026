@@ -1,0 +1,208 @@
+-- ==============================================================================
+-- SCRIPT DDL: SISTEMA DE GESTIÓN DE RESTAURANTE (OPTIMIZADO PARA MYSQL/MARIADB)
+-- ==============================================================================
+
+-- 1. CATÁLOGOS E INDEPENDIENTES
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE Menu (
+    id_menu VARCHAR(50) PRIMARY KEY,
+    categoriamenu VARCHAR(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Catálogo maestro que agrupa los platillos por categorías (ej. Desayunos, Cenas, Bebidas).';
+
+CREATE TABLE Proveedor (
+    idproveedor VARCHAR(50) PRIMARY KEY,
+    nombreempresa VARCHAR(150) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Registro de entidades externas (B2B) que suministran la materia prima e insumos al restaurante.';
+
+
+-- 2. JERARQUÍA DE USUARIOS (Patrón Table-Per-Type)
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE Usuario (
+    id VARCHAR(50) PRIMARY KEY,
+    nombrecompleto VARCHAR(150) NOT NULL,
+    telefono VARCHAR(20),
+    email VARCHAR(150) UNIQUE NOT NULL,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Tabla base (Superclase). Centraliza la identidad, credenciales y contacto de cualquier actor (Cliente o Empleado) del ecosistema.';
+
+CREATE TABLE Cliente (
+    id_cliente VARCHAR(50) PRIMARY KEY,
+    CONSTRAINT fk_cliente_usuario FOREIGN KEY (id_cliente) REFERENCES Usuario(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Subclase de Usuario. Representa a los consumidores finales. Su historial se traza a través de las relaciones con Reservas y Pedidos.';
+
+
+-- 3. INFRAESTRUCTURA Y EMPLEADOS
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE Restaurante (
+    id_restaurante VARCHAR(50) PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    direccion VARCHAR(255) NOT NULL,
+    id_menu_activo VARCHAR(50),
+    CONSTRAINT fk_restaurante_menu FOREIGN KEY (id_menu_activo) REFERENCES Menu(id_menu) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Entidad estructural core. Modela las sucursales físicas, actuando como nodo central para inventarios, personal y mesas.';
+
+CREATE TABLE Empleado (
+    id_empleado VARCHAR(50) PRIMARY KEY,
+    id_restaurante VARCHAR(50) NOT NULL,
+    sueldobase DECIMAL(10, 2) NOT NULL CHECK (sueldobase >= 0),
+    turno VARCHAR(50) NOT NULL,
+    CONSTRAINT fk_empleado_usuario FOREIGN KEY (id_empleado) REFERENCES Usuario(id) ON DELETE CASCADE,
+    CONSTRAINT fk_empleado_restaurante FOREIGN KEY (id_restaurante) REFERENCES Restaurante(id_restaurante) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Subclase de Usuario y Superclase de roles operativos. Almacena las condiciones laborales y vinculación con la sucursal.';
+
+-- Roles de Empleados
+CREATE TABLE Mesero (
+    id_mesero VARCHAR(50) PRIMARY KEY,
+    CONSTRAINT fk_mesero_empleado FOREIGN KEY (id_mesero) REFERENCES Empleado(id_empleado) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Rol operativo especializado en la atención directa en sala (front-of-house) y toma de pedidos presenciales.';
+
+CREATE TABLE Cocinero (
+    id_cocinero VARCHAR(50) PRIMARY KEY,
+    especialidad VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_cocinero_empleado FOREIGN KEY (id_cocinero) REFERENCES Empleado(id_empleado) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Rol operativo especializado en la preparación de platillos (back-of-house). Gestiona el estado de preparación de los pedidos.';
+
+CREATE TABLE Repartidor (
+    id_repartidor VARCHAR(50) PRIMARY KEY,
+    vehiculoasignado VARCHAR(100) NOT NULL,
+    zonaentrega VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_repartidor_empleado FOREIGN KEY (id_repartidor) REFERENCES Empleado(id_empleado) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Rol operativo de logística exterior. Encargado de cerrar el ciclo de pedidos tipo Delivery en la última milla.';
+
+CREATE TABLE Mesa (
+    id_mesa VARCHAR(50) PRIMARY KEY,
+    id_restaurante VARCHAR(50) NOT NULL,
+    numeromesa INT NOT NULL CHECK (numeromesa > 0),
+    capacidad INT NOT NULL CHECK (capacidad > 0),
+    ubicacion VARCHAR(100) NOT NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'Disponible',
+    CONSTRAINT fk_mesa_restaurante FOREIGN KEY (id_restaurante) REFERENCES Restaurante(id_restaurante) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Activo físico de la sucursal. Gestiona el aforo y la disponibilidad espacial para reservas y consumo en el local.';
+
+
+-- 4. INVENTARIO Y RECETAS (MENÚ)
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE Inventario (
+    idInsumo VARCHAR(50) PRIMARY KEY,
+    id_restaurante VARCHAR(50) NOT NULL,
+    id_proveedor VARCHAR(50) NOT NULL,
+    nombreInsumo VARCHAR(150) NOT NULL,
+    stockactual DECIMAL(10, 2) NOT NULL CHECK (stockactual >= 0),
+    stockminimo DECIMAL(10, 2) NOT NULL CHECK (stockminimo >= 0),
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_inventario_restaurante FOREIGN KEY (id_restaurante) REFERENCES Restaurante(id_restaurante) ON DELETE CASCADE,
+    CONSTRAINT fk_inventario_proveedor FOREIGN KEY (id_proveedor) REFERENCES Proveedor(idproveedor) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Control cuantitativo de materias primas por sucursal. Dispara alertas logísticas mediante la validación de stock mínimo.';
+
+CREATE TABLE Platillo (
+    idplatillo VARCHAR(50) PRIMARY KEY,
+    id_menu VARCHAR(50) NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    tiempoestimadoprep INT NOT NULL CHECK (tiempoestimadoprep > 0),
+    calorias DECIMAL(8, 2),
+    precio DECIMAL(10, 2) NOT NULL CHECK (precio >= 0),
+    CONSTRAINT fk_platillo_menu FOREIGN KEY (id_menu) REFERENCES Menu(id_menu) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Catálogo de productos finales para la venta. Almacena las métricas nutricionales, de costeo y de eficiencia (tiempos) para la cocina.';
+
+CREATE TABLE Receta (
+    id_platillo VARCHAR(50),
+    id_insumo VARCHAR(50),
+    cantidadrequerida DECIMAL(10, 2) NOT NULL CHECK (cantidadrequerida > 0),
+    PRIMARY KEY (id_platillo, id_insumo),
+    CONSTRAINT fk_receta_platillo FOREIGN KEY (id_platillo) REFERENCES Platillo(idplatillo) ON DELETE CASCADE,
+    CONSTRAINT fk_receta_insumo FOREIGN KEY (id_insumo) REFERENCES Inventario(idInsumo) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Tabla puente (relación N:M). Estructura la fórmula de cada platillo para permitir el costeo exacto y la automatización del descargo de inventario.';
+
+
+-- 5. OPERACIONES TRANSACCIONALES
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE Reserva (
+    idreserva VARCHAR(50) PRIMARY KEY,
+    id_cliente VARCHAR(50) NOT NULL,
+    id_mesa VARCHAR(50) NOT NULL,
+    fechahora DATETIME NOT NULL,
+    numeropersonas INT NOT NULL CHECK (numeropersonas > 0),
+    estado VARCHAR(50) NOT NULL DEFAULT 'Pendiente',
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reserva_cliente FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente) ON DELETE CASCADE,
+    CONSTRAINT fk_reserva_mesa FOREIGN KEY (id_mesa) REFERENCES Mesa(id_mesa) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Módulo de agendamiento. Pre-asigna un activo (Mesa) a un Cliente para un bloque temporal específico, garantizando el control de aforo.';
+
+CREATE TABLE Pedido (
+    idpedido VARCHAR(50) PRIMARY KEY,
+    id_cliente VARCHAR(50) NOT NULL,
+    id_mesero VARCHAR(50) DEFAULT NULL,
+    id_repartidor VARCHAR(50) DEFAULT NULL,
+    id_mesa VARCHAR(50) DEFAULT NULL,
+    fechahora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(50) NOT NULL DEFAULT 'Recibido',
+    tipopedido VARCHAR(50) NOT NULL,
+    CONSTRAINT fk_pedido_cliente FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_mesero FOREIGN KEY (id_mesero) REFERENCES Mesero(id_mesero) ON DELETE SET NULL,
+    CONSTRAINT fk_pedido_repartidor FOREIGN KEY (id_repartidor) REFERENCES Repartidor(id_repartidor) ON DELETE SET NULL,
+    CONSTRAINT fk_pedido_mesa FOREIGN KEY (id_mesa) REFERENCES Mesa(id_mesa) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Núcleo transaccional. Orquesta el flujo de valor conectando al cliente con los productos, asignando responsables dinámicamente según el canal (Local, Para llevar, Delivery).';
+
+CREATE TABLE DetallePedido (
+    id_detalle INT AUTO_INCREMENT PRIMARY KEY,
+    id_pedido VARCHAR(50) NOT NULL,
+    id_platillo VARCHAR(50) NOT NULL,
+    cantidad INT NOT NULL CHECK (cantidad > 0),
+    subtotal DECIMAL(10, 2) NOT NULL CHECK (subtotal >= 0),
+    CONSTRAINT fk_detalle_pedido FOREIGN KEY (id_pedido) REFERENCES Pedido(idpedido) ON DELETE CASCADE,
+    CONSTRAINT fk_detalle_platillo FOREIGN KEY (id_platillo) REFERENCES Platillo(idplatillo) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Desglose atómico del pedido (Líneas de pedido). Congela el precio y subtotal histórico al momento de la venta para evitar alteraciones contables a futuro.';
+
+CREATE TABLE Pago (
+    idpago VARCHAR(50) PRIMARY KEY,
+    id_pedido VARCHAR(50) UNIQUE NOT NULL,
+    montototal DECIMAL(10, 2) NOT NULL CHECK (montototal >= 0),
+    subtotal DECIMAL(10, 2) NOT NULL CHECK (subtotal >= 0),
+    impuestoIVA DECIMAL(10, 2) NOT NULL CHECK (impuestoIVA >= 0),
+    fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pago_pedido FOREIGN KEY (id_pedido) REFERENCES Pedido(idpedido) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Módulo financiero. Procesa y registra la liquidación económica del pedido (Relación 1:1), separando los valores base de las cargas impositivas (IVA).';
+
+CREATE TABLE Factura (
+    idfactura VARCHAR(50) PRIMARY KEY,
+    id_pago VARCHAR(50) UNIQUE NOT NULL,
+    rutcliente VARCHAR(20) NOT NULL,
+    fecha_emision TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_factura_pago FOREIGN KEY (id_pago) REFERENCES Pago(idpago) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Documento tributario formal. Legaliza el pago emitiendo un comprobante fiscal asociado al RUT (Rol Único Tributario) del cliente.';
+
+-- ==============================================================================
+-- 6. ÍNDICES DE OPTIMIZACIÓN
+-- ==============================================================================
+-- Se omiten los índices en las columnas FK porque InnoDB (MySQL/MariaDB) 
+-- genera automáticamente un índice al declarar una CONSTRAINT FOREIGN KEY.
+-- Solo creamos índices para columnas muy filtradas que no sean FK.
+-- ------------------------------------------------------------------------------
+
+CREATE INDEX idx_reserva_fechahora ON Reserva(fechahora);
+CREATE INDEX idx_pedido_fechahora ON Pedido(fechahora);
+CREATE INDEX idx_pedido_estado ON Pedido(estado);
+CREATE INDEX idx_usuario_email ON Usuario(email);
