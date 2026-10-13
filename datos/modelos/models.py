@@ -4,7 +4,7 @@ from decouple import config
 database = MySQLDatabase(config('database'), **
                          {'charset': 'utf8mb4', 
                           'host': config('host'), 
-                          'port': config('port'), 
+                          'port': int(config('port')), 
                           'user': config('user'), 
                           'password': config('password')})
 
@@ -108,4 +108,3 @@ class Zona(BaseModel):
 
     class Meta:
         table_name = 'zona'
-
