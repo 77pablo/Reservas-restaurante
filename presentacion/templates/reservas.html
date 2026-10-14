@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Administración de reservas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            color: #222;
+        }
+
+        .tabla-contenedor {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            white-space: nowrap;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 11px;
+            text-align: left;
+        }
+
+        th {
+            background: #245c45;
+            color: white;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+
+        a {
+            color: #245c45;
+        }
+    </style>
+</head>
+<body>
+    <h1>Administración de reservas</h1>
+    <p><a href="/">Volver al inicio</a></p>
+
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>N.º reserva</th>
+                    <th>Cliente</th>
+                    <th>Correo</th>
+                    <th>Personas</th>
+                    <th>Fecha</th>
+                    <th>Hora de inicio</th>
+                    <th>Hora de término</th>
+                    <th>Mesa</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reserva in reservas %}
+                <tr>
+                    <td>{{ reserva.id_reserva }}</td>
+                    <td>{{ reserva.nombre_cliente }}</td>
+                    <td>{{ reserva.correo_cliente }}</td>
+                    <td>{{ reserva.cantidad_personas }}</td>
+                    <td>
+                        {{ reserva.fecha.strftime('%d-%m-%Y')
+                           if reserva.fecha else 'Sin dato' }}
+                    </td>
+                    <td>
+                        {{ reserva.hora_inicio.strftime('%H:%M')
+                           if reserva.hora_inicio else 'Sin dato' }}
+                    </td>
+                    <td>
+                        {{ reserva.hora_fin.strftime('%H:%M')
+                           if reserva.hora_fin else 'Sin dato' }}
+                    </td>
+                    <td>
+                        {{ reserva.numero_mesa
+                           if reserva.numero_mesa != '' else 'Sin dato' }}
+                    </td>
+                    <td>{{ reserva.estado }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9">Todavía no hay reservas registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

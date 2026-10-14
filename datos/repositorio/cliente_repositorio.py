@@ -1,51 +1,46 @@
 
 from peewee import DoesNotExist
-from datos.conexion import database
+
 from datos.modelos.models import Cliente, Usuario
 
 
 class ClienteRepositorio:
 
     @staticmethod
-    def crear_cliente(
-        nombre_completo,
-        correo,
-        telefono,
-        contrasena,
-        preferencias=None,
-        puntos=0
-    ):
-        """Crea un usuario y su registro de cliente en una transacción."""
+    def buscar_por_nombre_y_correo(nombre_completo, correo_electronico):
+        """
+        Busca un cliente registrado cuyo nombre y correo coincidan.
+        Devuelve el Cliente o None si no existe una coincidencia.
+        """
+        nombre = nombre_completo.strip()
+        correo = correo_electronico.strip().lower()
+
+        if not nombre or not correo:
+            return None
+
+        consulta = (
+            Cliente
+            .select(Cliente, Usuario)
+            .join(
+                Usuario,
+                on=(Cliente.id_usuario == Usuario.id_usuario)
+            )
+            .where(
+                (Usuario.nombre_completo == nombre)
+                & (Usuario.correo_electronico == correo)
+            )
+        )
+
         try:
-            with database.atomic():
-                nuevo_usuario = Usuario.create(
-                    nombre_completo=nombre_completo,
-                    correo_electronico=correo,
-                    telefono=telefono,
-                    contrasena=contrasena
-                )
-
-                nuevo_cliente = Cliente.create(
-                    id_usuario=nuevo_usuario.id_usuario,
-                    preferencias_alimentarias=preferencias,
-                    puntos_fidelidad=puntos
-                )
-
-            return nuevo_cliente
-
-        except Exception as e:
-            print(f"Error al registrar el cliente: {e}")
+            return consulta.get()
+        except DoesNotExist:
             return None
 
     @staticmethod
-    def obtener_todos():
-        """Retorna todos los clientes registrados."""
-        return Cliente.select()
-
-    @staticmethod
-    def buscar_por_id(id_cli):
-        """Busca un cliente por su ID."""
+    def obtener_por_id(id_cliente):
         try:
-            return Cliente.get_by_id(id_cli)
+            return Cliente.get(
+                Cliente.id_cliente == id_cliente
+            )
         except DoesNotExist:
             return None

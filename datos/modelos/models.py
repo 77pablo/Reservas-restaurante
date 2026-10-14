@@ -1,5 +1,22 @@
-from peewee import MySQLDatabase,AutoField,IntegerField,TextField,CharField,DateField,TimeField,DateTimeField,Model,SQL,CompositeKey,BooleanField
-from decouple import config 
+
+
+from peewee import (
+    AutoField,
+    IntegerField,
+    TextField,
+    CharField,
+    DateField,
+    TimeField,
+    DateTimeField,
+    Model,
+    SQL,
+    CompositeKey,
+    BooleanField,
+)
+
+
+
+
 
 database = MySQLDatabase(config('database'), **
                          {'charset': 'utf8mb4', 
