@@ -1,7 +1,6 @@
-
 from peewee import DoesNotExist
 
-from datos.modelos.models import Cliente, Usuario
+from datos.modelos.models import ClienteDB, UsuarioDB
 
 
 class ClienteRepositorio:
@@ -9,8 +8,8 @@ class ClienteRepositorio:
     @staticmethod
     def buscar_por_nombre_y_correo(nombre_completo, correo_electronico):
         """
-        Busca un cliente registrado cuyo nombre y correo coincidan.
-        Devuelve el Cliente o None si no existe una coincidencia.
+        Busca un cliente por su nombre y correo electrónico.
+        Devuelve el registro Peewee o None si no existe.
         """
         nombre = nombre_completo.strip()
         correo = correo_electronico.strip().lower()
@@ -19,15 +18,15 @@ class ClienteRepositorio:
             return None
 
         consulta = (
-            Cliente
-            .select(Cliente, Usuario)
+            ClienteDB
+            .select(ClienteDB, UsuarioDB)
             .join(
-                Usuario,
-                on=(Cliente.id_usuario == Usuario.id_usuario)
+                UsuarioDB,
+                on=(ClienteDB.id_usuario == UsuarioDB.id_usuario),
             )
             .where(
-                (Usuario.nombre_completo == nombre)
-                & (Usuario.correo_electronico == correo)
+                (UsuarioDB.nombre_completo == nombre)
+                & (UsuarioDB.correo_electronico == correo)
             )
         )
 
@@ -39,8 +38,8 @@ class ClienteRepositorio:
     @staticmethod
     def obtener_por_id(id_cliente):
         try:
-            return Cliente.get(
-                Cliente.id_cliente == id_cliente
+            return ClienteDB.get(
+                ClienteDB.id_cliente == id_cliente
             )
         except DoesNotExist:
             return None

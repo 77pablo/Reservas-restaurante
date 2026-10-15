@@ -3,97 +3,367 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Administración de reservas</title>
+
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
+            margin: 0;
+            padding: 24px;
             font-family: Arial, sans-serif;
-            margin: 30px;
-            color: #222;
+            background: #f4f6f8;
+            color: #263238;
+        }
+
+        .contenedor {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .encabezado {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .subtitulo {
+            color: #607d8b;
+            margin-top: 8px;
+        }
+
+        .boton {
+            display: inline-block;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #315c4b;
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .boton:hover {
+            background: #244536;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
         .tabla-contenedor {
+            width: 100%;
             overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            white-space: nowrap;
+            min-width: 1050px;
         }
 
-        th, td {
-            border: 1px solid #ddd;
-            padding: 11px;
+        th,
+        td {
+            padding: 13px 12px;
+            border-bottom: 1px solid #e5e9ec;
             text-align: left;
+            vertical-align: middle;
         }
 
         th {
-            background: #245c45;
+            background: #edf2ef;
+            color: #294638;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: #fafcfb;
+        }
+
+        .estado {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .pendiente {
+            background: #fff1c9;
+            color: #805b00;
+        }
+
+        .confirmada {
+            background: #d9f3e3;
+            color: #17643a;
+        }
+
+        .cancelada {
+            background: #fde1e1;
+            color: #922b2b;
+        }
+
+        .completada {
+            background: #dce8fb;
+            color: #244f91;
+        }
+
+        .form-estado {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        select {
+            padding: 8px;
+            border: 1px solid #ccd5d0;
+            border-radius: 5px;
+            background: white;
+            max-width: 145px;
+        }
+
+        .guardar {
+            padding: 8px 10px;
+            border: none;
+            border-radius: 5px;
+            background: #315c4b;
             color: white;
+            cursor: pointer;
         }
 
-        tbody tr:nth-child(even) {
-            background: #f5f5f5;
+        .guardar:hover {
+            background: #244536;
         }
 
-        a {
-            color: #245c45;
+        .mensaje {
+            margin-bottom: 16px;
+            padding: 12px 15px;
+            border-radius: 6px;
+        }
+
+        .mensaje.success {
+            background: #d9f3e3;
+            color: #17643a;
+        }
+
+        .mensaje.error {
+            background: #fde1e1;
+            color: #922b2b;
+        }
+
+        .vacio {
+            padding: 30px;
+            text-align: center;
+            color: #607d8b;
+        }
+
+        .pie {
+            margin-top: 18px;
+            color: #607d8b;
+            font-size: 13px;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 12px;
+            }
+
+            .panel {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 23px;
+            }
         }
     </style>
 </head>
-<body>
-    <h1>Administración de reservas</h1>
-    <p><a href="/">Volver al inicio</a></p>
 
-    <div class="tabla-contenedor">
-        <table>
-            <thead>
-                <tr>
-                    <th>N.º reserva</th>
-                    <th>Cliente</th>
-                    <th>Correo</th>
-                    <th>Personas</th>
-                    <th>Fecha</th>
-                    <th>Hora de inicio</th>
-                    <th>Hora de término</th>
-                    <th>Mesa</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for reserva in reservas %}
-                <tr>
-                    <td>{{ reserva.id_reserva }}</td>
-                    <td>{{ reserva.nombre_cliente }}</td>
-                    <td>{{ reserva.correo_cliente }}</td>
-                    <td>{{ reserva.cantidad_personas }}</td>
-                    <td>
-                        {{ reserva.fecha.strftime('%d-%m-%Y')
-                           if reserva.fecha else 'Sin dato' }}
-                    </td>
-                    <td>
-                        {{ reserva.hora_inicio.strftime('%H:%M')
-                           if reserva.hora_inicio else 'Sin dato' }}
-                    </td>
-                    <td>
-                        {{ reserva.hora_fin.strftime('%H:%M')
-                           if reserva.hora_fin else 'Sin dato' }}
-                    </td>
-                    <td>
-                        {{ reserva.numero_mesa
-                           if reserva.numero_mesa != '' else 'Sin dato' }}
-                    </td>
-                    <td>{{ reserva.estado }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="9">Todavía no hay reservas registradas.</td>
-                </tr>
+<body>
+    <main class="contenedor">
+
+        <header class="encabezado">
+            <div>
+                <h1>Administración de reservas</h1>
+                <p class="subtitulo">
+                    Consulta las reservas y gestiona sus estados.
+                </p>
+            </div>
+
+            <div>
+                <a class="boton" href="/">Volver al inicio</a>
+                <a class="boton" href="/reservar">Nueva reserva</a>
+            </div>
+        </header>
+
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% if mensajes %}
+                {% for categoria, mensaje in mensajes %}
+                    <div class="mensaje {{ categoria }}" role="status">
+                        {{ mensaje }}
+                    </div>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="panel">
+            {% if reservas %}
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N.º reserva</th>
+                                <th>Cliente</th>
+                                <th>Correo</th>
+                                <th>Personas</th>
+                                <th>Fecha</th>
+                                <th>Hora inicio</th>
+                                <th>Hora término</th>
+                                <th>Mesa</th>
+                                <th>Estado</th>
+                                <th>Gestionar</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for reserva in reservas %}
+                                {% set estado = reserva.get('estado', 'Pendiente') %}
+
+                                <tr>
+                                    <td>
+                                        {{ reserva.get('id_reserva', '—') }}
+                                    </td>
+
+                                    <td>
+                                        {{ reserva.get('nombre_cliente') or 'Sin dato' }}
+                                    </td>
+
+                                    <td>
+                                        {{ reserva.get('correo_cliente') or 'Sin dato' }}
+                                    </td>
+
+                                    <td>
+                                        {{ reserva.get('cantidad_personas', '—') }}
+                                    </td>
+
+                                    <td>
+                                        {% if reserva.get('fecha') %}
+                                            {{ reserva.get('fecha') }}
+                                        {% else %}
+                                            Sin dato
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {{ reserva.get('hora_inicio') or '—' }}
+                                    </td>
+
+                                    <td>
+                                        {{ reserva.get('hora_fin') or '—' }}
+                                    </td>
+
+                                    <td>
+                                        {{ reserva.get('numero_mesa') or '—' }}
+                                    </td>
+
+                                    <td>
+                                        <span class="estado
+                                            {% if estado == 'Pendiente' %}pendiente
+                                            {% elif estado == 'Confirmada' %}confirmada
+                                            {% elif estado == 'Cancelada' %}cancelada
+                                            {% elif estado == 'Completada' %}completada
+                                            {% endif %}">
+                                            {{ estado }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        {% if estado in ['Pendiente', 'Confirmada'] %}
+                                            <form
+                                                class="form-estado"
+                                                method="POST"
+                                                action="{{ url_for(
+                                                    'cambiar_estado_reserva',
+                                                    id_reserva=reserva.get('id_reserva')
+                                                ) }}"
+                                            >
+                                                <input
+                                                    type="hidden"
+                                                    name="csrf_token"
+                                                    value="{{ csrf_token() }}"
+                                                >
+
+                                                <select name="estado" required>
+                                                    {% if estado == 'Pendiente' %}
+                                                        <option value="Confirmada">
+                                                            Confirmar
+                                                        </option>
+                                                    {% endif %}
+
+                                                    <option value="Cancelada">
+                                                        Cancelar
+                                                    </option>
+
+                                                    {% if estado == 'Confirmada' %}
+                                                        <option value="Completada">
+                                                            Completar
+                                                        </option>
+                                                    {% endif %}
+                                                </select>
+
+                                                <button
+                                                    type="submit"
+                                                    class="guardar"
+                                                >
+                                                    Guardar
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span>Sin acciones</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="pie">
+                    Total de registros mostrados: {{ reservas | length }}
+                </p>
+
+            {% else %}
+                <div class="vacio">
+                    <h2>No hay reservas registradas</h2>
+                    <p>Cuando se creen reservas, aparecerán en esta tabla.</p>
+                    <a class="boton" href="/reservar">
+                        Crear una reserva
+                    </a>
+                </div>
+            {% endif %}
+        </section>
+    </main>
 </body>
 </html>
