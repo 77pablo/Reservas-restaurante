@@ -1,118 +1,214 @@
+
+from datetime import datetime
+
 from peewee import (
+    Model,
     AutoField,
     IntegerField,
-    TextField,
     CharField,
+    TextField,
+    DateTimeField,
     DateField,
     TimeField,
-    DateTimeField,
-    Model,
-    SQL,
-    CompositeKey,
     BooleanField,
     ForeignKeyField,
+    CompositeKey,
 )
 
-from datos.conexion import database
+from datos.conexion import db
 
 
-# =========================================================
-# MODELOS DE DOMINIO: REPRESENTAN LA HERENCIA DEL UML
-# =========================================================
+# ============================================================
+# MODELO BASE DE PERSISTENCIA
+# ============================================================
+
+class BaseModel(Model):
+    """Modelo base que comparte la conexión de la aplicación."""
+
+    class Meta:
+        database = db
+
+
+# ============================================================
+# CLASES DE DOMINIO: USUARIO, CLIENTE Y EMPLEADO
+# ============================================================
 
 class Usuario:
-    """Clase base de dominio para los usuarios."""
+    """Representa a un usuario del sistema."""
 
     def __init__(
         self,
+        id_usuario=None,
         nombre_completo="",
-        correo_electronico="",
+        correo="",
+        telefono="",
         contrasena="",
-        telefono=None,
     ):
-        self.nombre_completo = nombre_completo
-        self.correo_electronico = correo_electronico
-        self.contrasena = contrasena
-        self.telefono = telefono
+        self._id_usuario = id_usuario
+        self._nombre_completo = nombre_completo
+        self._correo = correo
+        self._telefono = telefono
+        self._contrasena = contrasena
+
+    @property
+    def id_usuario(self):
+        return self._id_usuario
+
+    @id_usuario.setter
+    def id_usuario(self, valor):
+        self._id_usuario = valor
+
+    @property
+    def nombre_completo(self):
+        return self._nombre_completo
+
+    @nombre_completo.setter
+    def nombre_completo(self, valor):
+        self._nombre_completo = valor
+
+    @property
+    def correo(self):
+        return self._correo
+
+    @correo.setter
+    def correo(self, valor):
+        self._correo = valor
+
+    @property
+    def telefono(self):
+        return self._telefono
+
+    @telefono.setter
+    def telefono(self, valor):
+        self._telefono = valor
+
+    @property
+    def contrasena(self):
+        return self._contrasena
+
+    @contrasena.setter
+    def contrasena(self, valor):
+        self._contrasena = valor
 
     def iniciarSesion(self):
-        return bool(self.correo_electronico and self.contrasena)
+        return True
 
     def cerrarSesion(self):
         return True
 
 
 class Cliente(Usuario):
-    """Cliente: hereda los atributos y métodos de Usuario."""
+    """Cliente del restaurante."""
 
     def __init__(
         self,
+        id_usuario=None,
         nombre_completo="",
-        correo_electronico="",
+        correo="",
+        telefono="",
         contrasena="",
-        telefono=None,
-        preferencias_alimentarias=None,
+        preferencias_alimentarias="",
         puntos_fidelidad=0,
     ):
         super().__init__(
-            nombre_completo,
-            correo_electronico,
-            contrasena,
-            telefono,
+            id_usuario=id_usuario,
+            nombre_completo=nombre_completo,
+            correo=correo,
+            telefono=telefono,
+            contrasena=contrasena,
         )
-        self.preferencias_alimentarias = preferencias_alimentarias
-        self.puntos_fidelidad = puntos_fidelidad
+        self._preferencias_alimentarias = preferencias_alimentarias
+        self._puntos_fidelidad = puntos_fidelidad
+
+    @property
+    def preferencias_alimentarias(self):
+        return self._preferencias_alimentarias
+
+    @preferencias_alimentarias.setter
+    def preferencias_alimentarias(self, valor):
+        self._preferencias_alimentarias = valor
+
+    @property
+    def puntos_fidelidad(self):
+        return self._puntos_fidelidad
+
+    @puntos_fidelidad.setter
+    def puntos_fidelidad(self, valor):
+        self._puntos_fidelidad = valor
 
     def solicitarReserva(self):
         return True
 
-    def cancelarReserva(self):
-        return True
+    def cancelarReserva(self, id_reserva):
+        return id_reserva
 
 
 class Empleado(Usuario):
-    """Empleado: hereda los atributos y métodos de Usuario."""
+    """Empleado del restaurante."""
 
     def __init__(
         self,
+        id_usuario=None,
         nombre_completo="",
-        correo_electronico="",
+        correo="",
+        telefono="",
         contrasena="",
-        telefono=None,
+        id_empleado=None,
         cargo="",
-        fecha_contratacion=None,
+        turno="",
     ):
         super().__init__(
-            nombre_completo,
-            correo_electronico,
-            contrasena,
-            telefono,
+            id_usuario=id_usuario,
+            nombre_completo=nombre_completo,
+            correo=correo,
+            telefono=telefono,
+            contrasena=contrasena,
         )
-        self.cargo = cargo
-        self.fecha_contratacion = fecha_contratacion
+        self._id_empleado = id_empleado
+        self._cargo = cargo
+        self._turno = turno
 
-    def aprobarReserva(self):
-        return True
+    @property
+    def id_empleado(self):
+        return self._id_empleado
+
+    @id_empleado.setter
+    def id_empleado(self, valor):
+        self._id_empleado = valor
+
+    @property
+    def cargo(self):
+        return self._cargo
+
+    @cargo.setter
+    def cargo(self, valor):
+        self._cargo = valor
+
+    @property
+    def turno(self):
+        return self._turno
+
+    @turno.setter
+    def turno(self, valor):
+        self._turno = valor
+
+    def aprobarReserva(self, id_reserva):
+        return id_reserva
 
     def gestionarMesas(self):
         return True
 
 
-# =========================================================
-# MODELOS DE PERSISTENCIA: TABLAS REALES DE MYSQL
-# =========================================================
-
-class BaseModel(Model):
-    class Meta:
-        database = database
-
+# ============================================================
+# MODELOS DE PERSISTENCIA: TABLAS MYSQL
+# ============================================================
 
 class UsuarioDB(BaseModel):
-    contrasena = CharField()
-    correo_electronico = CharField(max_length=100, unique=True)
     id_usuario = AutoField()
     nombre_completo = CharField(max_length=150)
+    correo_electronico = CharField(max_length=100, unique=True)
     telefono = CharField(max_length=20, null=True)
+    contrasena = CharField(max_length=255)
 
     class Meta:
         table_name = "usuario"
@@ -120,168 +216,122 @@ class UsuarioDB(BaseModel):
 
 class ClienteDB(BaseModel):
     id_cliente = AutoField()
-    id_usuario = ForeignKeyField(
-    UsuarioDB,
-    field=UsuarioDB.id_usuario,
-    column_name="id_usuario",
-    unique=True,
-    lazy_load=False,
-    on_delete="CASCADE",
-)
-    preferencias_alimentarias = TextField(null=True)
-    puntos_fidelidad = IntegerField(
-        constraints=[SQL("DEFAULT 0")],
-        null=True,
+    usuario = ForeignKeyField(
+        UsuarioDB,
+        column_name="id_usuario",
+        field="id_usuario",
+        backref="cliente",
+        on_delete="CASCADE",
+        unique=True,
     )
+    preferencias_alimentarias = TextField(null=True)
+    puntos_fidelidad = IntegerField(default=0)
 
     class Meta:
         table_name = "cliente"
 
 
 class EmpleadoDB(BaseModel):
+    id_empleado = AutoField()
+    usuario = ForeignKeyField(
+        UsuarioDB,
+        column_name="id_usuario",
+        field="id_usuario",
+        backref="empleado",
+        on_delete="CASCADE",
+        unique=True,
+    )
     cargo = CharField(max_length=50)
     fecha_contratacion = DateField(null=True)
-    id_empleado = AutoField()
-    id_usuario = ForeignKeyField(
-    UsuarioDB,
-    field=UsuarioDB.id_usuario,
-    column_name="id_usuario",
-    unique=True,
-    lazy_load=False,
-    on_delete="CASCADE",
-)
 
     class Meta:
         table_name = "empleado"
 
-        # =========================================================
-# MODELOS DE PERSISTENCIA RECUPERADOS
-# =========================================================
 
 class Restaurant(BaseModel):
-    direccion = CharField(max_length=200)
-    horario_apertura = TimeField()
-    horario_cierre = TimeField()
     id_restaurant = AutoField()
     nombre = CharField(max_length=100)
+    direccion = CharField(max_length=200)
     telefono_contacto = CharField(max_length=20, null=True)
+    horario_apertura = TimeField()
+    horario_cierre = TimeField()
 
     class Meta:
         table_name = "restaurant"
 
-    def abrirJornada(self):
-        return True
-
-    def cerrarJornada(self):
-        return True
-
 
 class Zona(BaseModel):
-    id_restaurant = ForeignKeyField(
-    Restaurant,
-    field=Restaurant.id_restaurant,
-    column_name="id_restaurant",
-    lazy_load=False,
-    on_delete="CASCADE",
-)
     id_zona = AutoField()
-    nombre_zona = CharField(max_length=50)
-    permite_fumadores = BooleanField(
-        constraints=[SQL("DEFAULT 0")],
-        null=True,
+    restaurant = ForeignKeyField(
+        Restaurant,
+        column_name="id_restaurant",
+        field="id_restaurant",
+        backref="zonas",
+        on_delete="CASCADE",
     )
+    nombre_zona = CharField(max_length=50)
+    permite_fumadores = BooleanField(null=True, default=False)
 
     class Meta:
         table_name = "zona"
 
-    def agregarMesa(self):
-        return True
-
-    def obtenerMesas(self):
-        return Mesa.select().where(Mesa.id_zona == self.id_zona)
-
 
 class Mesa(BaseModel):
     id_mesa = AutoField()
-    id_zona = ForeignKeyField(
-    Zona,
-    field=Zona.id_zona,
-    column_name="id_zona",
-    lazy_load=False,
-    on_delete="CASCADE",
-)
+    zona = ForeignKeyField(
+        Zona,
+        column_name="id_zona",
+        field="id_zona",
+        backref="mesas",
+        on_delete="CASCADE",
+    )
     numero_mesa = IntegerField()
     capacidad_comensales = IntegerField()
-    activa = BooleanField(
-        constraints=[SQL("DEFAULT 1")],
-        null=True,
-    )
+    activa = BooleanField(null=True, default=True)
 
     class Meta:
         table_name = "mesa"
 
-    def asignarReserva(self):
-        return True
-
-    def liberar(self):
-        return True
-
 
 class Reserva(BaseModel):
     id_reserva = AutoField()
-    id_cliente = ForeignKeyField(
-    ClienteDB,
-    field=ClienteDB.id_cliente,
-    column_name="id_cliente",
-    lazy_load=False,
-)
-    fecha_creacion = DateTimeField(
-        constraints=[SQL("DEFAULT CURRENT_TIMESTAMP")],
-        null=True,
+    cliente = ForeignKeyField(
+        ClienteDB,
+        column_name="id_cliente",
+        field="id_cliente",
+        backref="reservas",
+        on_delete="CASCADE",
     )
+    fecha_creacion = DateTimeField(default=datetime.now)
     cantidad_personas = IntegerField()
     estado = CharField(max_length=20)
     observaciones_especiales = TextField(null=True)
+    fecha_reserva = DateField(null=True)
+    hora_inicio_reserva = TimeField(null=True)
+    hora_fin_reserva = TimeField(null=True)
+    numero_mesa_reserva = IntegerField(null=True)
 
     class Meta:
         table_name = "reserva"
 
-    def crear(self):
-        return self.save(force_insert=True)
-
-    def actualizarEstado(self, nuevo_estado):
-        estados_validos = {
-            "Pendiente",
-            "Confirmada",
-            "Cancelada",
-            "Completada",
-        }
-
-        if nuevo_estado not in estados_validos:
-            return False
-
-        self.estado = nuevo_estado
-        return self.save()
-
 
 class Disponibilidad(BaseModel):
     id_disponibilidad = AutoField()
-    id_mesa = ForeignKeyField(
-    Mesa,
-    field=Mesa.id_mesa,
-    column_name="id_mesa",
-    lazy_load=False,
-    on_delete="CASCADE",
-)
-
-    id_reserva = ForeignKeyField(
-    Reserva,
-    field=Reserva.id_reserva,
-    column_name="id_reserva",
-    null=True,
-    lazy_load=False,
-    on_delete="SET NULL",
-)
+    mesa = ForeignKeyField(
+        Mesa,
+        column_name="id_mesa",
+        field="id_mesa",
+        backref="disponibilidades",
+        on_delete="CASCADE",
+    )
+    reserva = ForeignKeyField(
+        Reserva,
+        column_name="id_reserva",
+        field="id_reserva",
+        backref="disponibilidades",
+        null=True,
+        on_delete="SET NULL",
+    )
     fecha = DateField()
     hora_inicio = TimeField()
     hora_fin = TimeField()
@@ -290,43 +340,69 @@ class Disponibilidad(BaseModel):
     class Meta:
         table_name = "disponibilidad"
 
-    def verificarEstado(self):
-        return self.estado_franja == "Disponible"
-
-    def bloquearHorario(self, id_reserva):
-        if self.estado_franja != "Disponible":
-            return False
-
-        self.estado_franja = "Reservada"
-        self.id_reserva = id_reserva
-        return self.save()
-
 
 class EmpleadoRestaurant(BaseModel):
-    id_empleado = ForeignKeyField(
+    empleado = ForeignKeyField(
         EmpleadoDB,
-        field=EmpleadoDB.id_empleado,
         column_name="id_empleado",
-        lazy_load=False,
+        field="id_empleado",
+        backref="restaurantes_asignados",
         on_delete="CASCADE",
     )
-
-    id_restaurant = ForeignKeyField(
+    restaurant = ForeignKeyField(
         Restaurant,
-        field=Restaurant.id_restaurant,
         column_name="id_restaurant",
-        lazy_load=False,
+        field="id_restaurant",
+        backref="empleados_asignados",
         on_delete="CASCADE",
     )
-
     turno = CharField(max_length=50)
 
     class Meta:
         table_name = "empleado_restaurant"
-        primary_key = CompositeKey(
-            "id_empleado",
-            "id_restaurant",
-        )
+        primary_key = CompositeKey("empleado", "restaurant")
 
 
+# ============================================================
+# REGISTRO DE MODELOS
+# ============================================================
 
+MODELOS = [
+    UsuarioDB,
+    ClienteDB,
+    EmpleadoDB,
+    Restaurant,
+    Zona,
+    Mesa,
+    Reserva,
+    Disponibilidad,
+    EmpleadoRestaurant,
+]
+
+
+# ============================================================
+# UTILIDADES
+# ============================================================
+
+def probar_conexion():
+    """Comprueba la conexión a MySQL."""
+    try:
+        db.connect(reuse_if_open=True)
+        db.execute_sql("SELECT 1")
+        return True
+    except Exception as error:
+        print(f"Error de conexión a MySQL: {error}")
+        return False
+    finally:
+        if not db.is_closed():
+            db.close()
+
+
+def crear_tablas():
+    """Crea las tablas declaradas que todavía no existan."""
+    db.connect(reuse_if_open=True)
+    try:
+        db.create_tables(MODELOS, safe=True)
+    finally:
+        if not db.is_closed():
+            db.close()

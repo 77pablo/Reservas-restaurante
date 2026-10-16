@@ -11,3 +11,4 @@ database = MySQLDatabase(
         'password': config('password')
     }
 )
+db = database

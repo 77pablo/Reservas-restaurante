@@ -3,130 +3,247 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Reservar mesa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reservar una mesa</title>
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 650px;
-            margin: 40px auto;
-            padding: 20px;
-            background: #f5f5f5;
-            color: #222;
+        * {
+            box-sizing: border-box;
         }
 
-        form {
-            background: white;
-            padding: 25px;
+        body {
+            margin: 0;
+            padding: 30px 16px;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f8;
+            color: #24303f;
+        }
+
+        .contenedor {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px;
+            background: #ffffff;
             border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #203a5f;
+        }
+
+        .descripcion {
+            margin-bottom: 25px;
+            color: #5d6876;
+            line-height: 1.5;
         }
 
         label {
             display: block;
-            margin-top: 16px;
+            margin-top: 17px;
+            margin-bottom: 7px;
             font-weight: bold;
         }
 
-        input, textarea, button {
-            box-sizing: border-box;
+        input,
+        select,
+        textarea {
+            display: block;
             width: 100%;
-            margin-top: 7px;
-            padding: 11px;
-            font-size: 16px;
+            padding: 11px 12px;
+            border: 1px solid #cbd2da;
+            border-radius: 6px;
+            font-size: 15px;
+            background: #fff;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: 2px solid #9bbce9;
+            border-color: #315f99;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
         }
 
         button {
-            margin-top: 24px;
-            background: #245c45;
-            color: white;
-            border: 0;
+            display: block;
+            width: 100%;
+            margin-top: 25px;
+            padding: 13px;
+            border: none;
             border-radius: 6px;
+            background: #24558a;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
         }
 
-        a {
-            color: #245c45;
+        button:hover {
+            background: #193f69;
+        }
+
+        .mensaje {
+            margin: 16px 0;
+            padding: 13px 15px;
+            border-radius: 6px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .mensaje.error {
+            color: #842029;
+            background: #f8d7da;
+            border: 1px solid #f1aeb5;
+        }
+
+        .mensaje.success {
+            color: #0f5132;
+            background: #d1e7dd;
+            border: 1px solid #a3cfbb;
+        }
+
+        .mensaje.warning {
+            color: #664d03;
+            background: #fff3cd;
+            border: 1px solid #ffecb5;
+        }
+
+        .volver {
+            margin-top: 22px;
+            text-align: center;
+        }
+
+        .volver a {
+            color: #24558a;
+            text-decoration: none;
+        }
+
+        .volver a:hover {
+            text-decoration: underline;
+        }
+
+        .nota {
+            margin-top: 18px;
+            color: #687383;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 480px) {
+            .contenedor {
+                padding: 22px 18px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <h1>Reservar una mesa</h1>
-    <p>Utiliza los datos de tu cuenta de cliente registrada.</p>
+    <main class="contenedor">
+        <h1>Reservar una mesa</h1>
 
-    <form method="POST" action="{{ url_for('reservar') }}">
-        <input
-            type="hidden"
-            name="csrf_token"
-            value="{{ csrf_token() }}"
-        >
+        <p class="descripcion">
+            Utiliza los datos de tu cuenta de cliente registrada
+            para solicitar una reserva en el restaurante.
+        </p>
 
-        <label for="nombre_completo">Nombre completo</label>
-        <input
-            type="text"
-            id="nombre_completo"
-            name="nombre_completo"
-            maxlength="150"
-            autocomplete="name"
-            required
-        >
+        <!-- Mensajes enviados desde Flask -->
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% if mensajes %}
+                <div class="mensajes" role="status" aria-live="polite">
+                    {% for categoria, mensaje in mensajes %}
+                        <p class="mensaje {{ categoria }}">
+                            {{ mensaje }}
+                        </p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-        <label for="correo_electronico">Correo electrónico</label>
-        <input
-            type="email"
-            id="correo_electronico"
-            name="correo_electronico"
-            maxlength="100"
-            autocomplete="email"
-            required
-        >
+        <form method="POST" action="{{ url_for('reservar') }}">
+            <!-- Protección CSRF -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
 
-        <label for="fecha">Fecha de la reserva</label>
-        <input
-            type="date"
-            id="fecha"
-            name="fecha"
-            min="{{ fecha_minima }}"
-            required
-        >
+            <label for="nombre">Nombre completo</label>
+            <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                autocomplete="name"
+                required
+            >
 
-        <label for="cantidad_personas">Cantidad de personas</label>
-        <input
-            type="number"
-            id="cantidad_personas"
-            name="cantidad_personas"
-            min="1"
-            max="30"
-            value="2"
-            required
-        >
+            <label for="correo">Correo electrónico</label>
+            <input
+                type="email"
+                id="correo"
+                name="correo"
+                autocomplete="email"
+                required
+            >
 
-        <label for="hora_inicio">Hora de inicio</label>
-        <input
-            type="time"
-            id="hora_inicio"
-            name="hora_inicio"
-            required
-        >
+            <label for="cantidad_personas">Cantidad de personas</label>
+            <input
+                type="number"
+                id="cantidad_personas"
+                name="cantidad_personas"
+                min="1"
+                step="1"
+                required
+            >
 
-        <label for="hora_fin">Hora de término</label>
-        <input
-            type="time"
-            id="hora_fin"
-            name="hora_fin"
-            required
-        >
+            <label for="fecha">Fecha de la reserva</label>
+            <input
+                type="date"
+                id="fecha"
+                name="fecha"
+                required
+            >
 
-        <label for="observaciones">Observaciones (opcional)</label>
-        <textarea
-            id="observaciones"
-            name="observaciones"
-            rows="4"
-            placeholder="Preferencias u otras indicaciones"
-        ></textarea>
+            <label for="hora_inicio">Hora de inicio</label>
+            <input
+                type="time"
+                id="hora_inicio"
+                name="hora_inicio"
+                required
+            >
 
-        <button type="submit">Confirmar reserva</button>
-    </form>
+            <label for="hora_fin">Hora de término</label>
+            <input
+                type="time"
+                id="hora_fin"
+                name="hora_fin"
+                required
+            >
 
-    <p><a href="/">Volver al inicio</a></p>
+            <label for="observaciones">Observaciones especiales</label>
+            <textarea
+                id="observaciones"
+                name="observaciones"
+                maxlength="1000"
+                placeholder="Indica aquí alguna solicitud especial (opcional)"
+            ></textarea>
+
+            <button type="submit">Confirmar reserva</button>
+        </form>
+
+        <p class="nota">
+            La reserva está sujeta a la disponibilidad de mesas
+            y a la capacidad del restaurante.
+        </p>
+
+        <p class="volver">
+            <a href="{{ url_for('inicio') }}">Volver al inicio</a>
+        </p>
+    </main>
 </body>
 </html>
