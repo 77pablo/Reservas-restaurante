@@ -19,23 +19,19 @@ from datos.conexion import db
 
 
 # ============================================================
-# MODELO BASE DE PERSISTENCIA
+# MODELO BASE
 # ============================================================
 
 class BaseModel(Model):
-    """Modelo base que comparte la conexión de la aplicación."""
-
     class Meta:
         database = db
 
 
 # ============================================================
-# CLASES DE DOMINIO: USUARIO, CLIENTE Y EMPLEADO
+# CLASES DE DOMINIO: UML
 # ============================================================
 
 class Usuario:
-    """Representa a un usuario del sistema."""
-
     def __init__(
         self,
         id_usuario=None,
@@ -90,16 +86,14 @@ class Usuario:
     def contrasena(self, valor):
         self._contrasena = valor
 
-    def iniciarSesion(self):
-        return True
+    def iniciarSesion(self) -> bool:
+        return bool(self._correo and self._contrasena)
 
-    def cerrarSesion(self):
-        return True
+    def cerrarSesion(self) -> None:
+        pass
 
 
 class Cliente(Usuario):
-    """Cliente del restaurante."""
-
     def __init__(
         self,
         id_usuario=None,
@@ -107,26 +101,38 @@ class Cliente(Usuario):
         correo="",
         telefono="",
         contrasena="",
-        preferencias_alimentarias="",
+        preferencias="",
         puntos_fidelidad=0,
+        preferencias_alimentarias=None,
     ):
         super().__init__(
-            id_usuario=id_usuario,
-            nombre_completo=nombre_completo,
-            correo=correo,
-            telefono=telefono,
-            contrasena=contrasena,
+            id_usuario,
+            nombre_completo,
+            correo,
+            telefono,
+            contrasena,
         )
-        self._preferencias_alimentarias = preferencias_alimentarias
+        if preferencias_alimentarias is not None:
+            preferencias = preferencias_alimentarias
+
+        self._preferencias = preferencias
         self._puntos_fidelidad = puntos_fidelidad
 
     @property
+    def preferencias(self):
+        return self._preferencias
+
+    @preferencias.setter
+    def preferencias(self, valor):
+        self._preferencias = valor
+
+    @property
     def preferencias_alimentarias(self):
-        return self._preferencias_alimentarias
+        return self._preferencias
 
     @preferencias_alimentarias.setter
     def preferencias_alimentarias(self, valor):
-        self._preferencias_alimentarias = valor
+        self._preferencias = valor
 
     @property
     def puntos_fidelidad(self):
@@ -136,16 +142,14 @@ class Cliente(Usuario):
     def puntos_fidelidad(self, valor):
         self._puntos_fidelidad = valor
 
-    def solicitarReserva(self):
-        return True
+    def solicitarReserva(self) -> None:
+        pass
 
-    def cancelarReserva(self, id_reserva):
-        return id_reserva
+    def cancelarReserva(self, id_reserva) -> bool:
+        return id_reserva is not None
 
 
 class Empleado(Usuario):
-    """Empleado del restaurante."""
-
     def __init__(
         self,
         id_usuario=None,
@@ -158,11 +162,11 @@ class Empleado(Usuario):
         turno="",
     ):
         super().__init__(
-            id_usuario=id_usuario,
-            nombre_completo=nombre_completo,
-            correo=correo,
-            telefono=telefono,
-            contrasena=contrasena,
+            id_usuario,
+            nombre_completo,
+            correo,
+            telefono,
+            contrasena,
         )
         self._id_empleado = id_empleado
         self._cargo = cargo
@@ -192,15 +196,15 @@ class Empleado(Usuario):
     def turno(self, valor):
         self._turno = valor
 
-    def aprobarReserva(self, id_reserva):
-        return id_reserva
+    def aprobarReserva(self, id_reserva) -> bool:
+        return id_reserva is not None
 
-    def gestionarMesas(self):
-        return True
+    def gestionarMesas(self) -> None:
+        pass
 
 
 # ============================================================
-# MODELOS DE PERSISTENCIA: TABLAS MYSQL
+# PERSISTENCIA: TABLAS MYSQL
 # ============================================================
 
 class UsuarioDB(BaseModel):
@@ -212,6 +216,14 @@ class UsuarioDB(BaseModel):
 
     class Meta:
         table_name = "usuario"
+
+    @property
+    def correo(self):
+        return self.correo_electronico
+
+    @correo.setter
+    def correo(self, valor):
+        self.correo_electronico = valor
 
 
 class ClienteDB(BaseModel):
@@ -229,6 +241,14 @@ class ClienteDB(BaseModel):
 
     class Meta:
         table_name = "cliente"
+
+    @property
+    def preferencias(self):
+        return self.preferencias_alimentarias
+
+    @preferencias.setter
+    def preferencias(self, valor):
+        self.preferencias_alimentarias = valor
 
 
 class EmpleadoDB(BaseModel):
@@ -259,6 +279,24 @@ class Restaurant(BaseModel):
     class Meta:
         table_name = "restaurant"
 
+    @property
+    def telefono(self):
+        return self.telefono_contacto
+
+    @telefono.setter
+    def telefono(self, valor):
+        self.telefono_contacto = valor
+
+    def abrirJornada(self) -> None:
+        pass
+
+    def cerrarJornada(self) -> None:
+        pass
+
+
+# Nombre público definido en el UML.
+Restaurante = Restaurant
+
 
 class Zona(BaseModel):
     id_zona = AutoField()
@@ -274,6 +312,24 @@ class Zona(BaseModel):
 
     class Meta:
         table_name = "zona"
+
+    @property
+    def id_restaurant(self):
+        return self.restaurant_id
+
+    def agregarMesa(self, numero_mesa, capacidad, activa=True):
+        if capacidad < 1:
+            raise ValueError("La capacidad debe ser mayor que cero.")
+
+        return Mesa.create(
+            zona=self,
+            numero_mesa=numero_mesa,
+            capacidad_comensales=capacidad,
+            activa=activa,
+        )
+
+    def obtenerMesas(self):
+        return list(Mesa.select().where(Mesa.zona == self))
 
 
 class Mesa(BaseModel):
@@ -291,6 +347,45 @@ class Mesa(BaseModel):
 
     class Meta:
         table_name = "mesa"
+
+    @property
+    def id_zona(self):
+        return self.zona_id
+
+    @property
+    def capacidad(self):
+        return self.capacidad_comensales
+
+    @capacidad.setter
+    def capacidad(self, valor):
+        self.capacidad_comensales = valor
+
+    def asignarReserva(self, reserva) -> None:
+        if not self.activa:
+            return
+
+        if not isinstance(reserva, Reserva):
+            raise TypeError("Se requiere una instancia de Reserva.")
+
+        franja = (
+            Disponibilidad.select()
+            .where(
+                (Disponibilidad.mesa == self)
+                & (Disponibilidad.estado_franja == "Disponible")
+                & Disponibilidad.reserva.is_null()
+            )
+            .first()
+        )
+
+        if franja is not None:
+            franja.reserva = reserva
+            franja.estado_franja = "Reservada"
+            franja.save()
+
+    def liberar(self) -> None:
+        # La liberación transaccional se realiza en el repositorio
+        # para evitar liberar franjas de otras reservas.
+        pass
 
 
 class Reserva(BaseModel):
@@ -313,6 +408,46 @@ class Reserva(BaseModel):
 
     class Meta:
         table_name = "reserva"
+
+    @property
+    def id_cliente(self):
+        return self.cliente_id
+
+    @property
+    def cant_personas(self):
+        return self.cantidad_personas
+
+    @cant_personas.setter
+    def cant_personas(self, valor):
+        self.cantidad_personas = valor
+
+    @property
+    def observaciones(self):
+        return self.observaciones_especiales
+
+    @observaciones.setter
+    def observaciones(self, valor):
+        self.observaciones_especiales = valor
+
+    def crear(self) -> bool:
+        if self.get_id() is not None:
+            return True
+        return bool(self.save(force_insert=True))
+
+    def actualizarEstado(self, nuevo_estado) -> bool:
+        from datos.repositorio.reserva_repositorio import (
+            ReservaRepositorio,
+        )
+
+        resultado = ReservaRepositorio.cambiar_estado(
+            self.id_reserva,
+            nuevo_estado,
+        )
+
+        if resultado:
+            self.estado = nuevo_estado
+
+        return bool(resultado)
 
 
 class Disponibilidad(BaseModel):
@@ -339,6 +474,28 @@ class Disponibilidad(BaseModel):
 
     class Meta:
         table_name = "disponibilidad"
+
+    @property
+    def id_mesa(self):
+        return self.mesa_id
+
+    @property
+    def id_reserva(self):
+        return self.reserva_id
+
+    def verificarEstado(self) -> bool:
+        return self.estado_franja.strip().lower() == "disponible"
+
+    def bloquearHorario(self, reserva=None) -> None:
+        if self.estado_franja.strip().lower() != "disponible":
+            return
+
+        if reserva is not None and not isinstance(reserva, Reserva):
+            raise TypeError("Se requiere una instancia de Reserva.")
+
+        self.reserva = reserva
+        self.estado_franja = "Reservada"
+        self.save()
 
 
 class EmpleadoRestaurant(BaseModel):
@@ -381,11 +538,11 @@ MODELOS = [
 
 
 # ============================================================
-# UTILIDADES
+# UTILIDADES DE BASE DE DATOS
 # ============================================================
 
 def probar_conexion():
-    """Comprueba la conexión a MySQL."""
+    """Comprueba la conexión a MySQL ejecutando una consulta sencilla."""
     try:
         db.connect(reuse_if_open=True)
         db.execute_sql("SELECT 1")

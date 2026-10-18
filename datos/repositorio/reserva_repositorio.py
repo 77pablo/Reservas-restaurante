@@ -14,7 +14,7 @@ from datos.modelos.models import (
 
 
 class ReservaRepositorio:
-    """Gestiona las operaciones de reservas en MySQL."""
+    """Gestiona las reservas y la disponibilidad de las mesas."""
 
     ESTADOS_VALIDOS = {
         "Pendiente",
@@ -30,9 +30,13 @@ class ReservaRepositorio:
         "Completada": set(),
     }
 
+    # ---------------------------------------------------------
+    # CONVERSIONES Y VALIDACIONES
+    # ---------------------------------------------------------
+
     @staticmethod
     def _convertir_fecha(valor):
-        """Convierte una fecha ISO o datetime en date."""
+        """Convierte una fecha a date."""
         if isinstance(valor, datetime):
             return valor.date()
 
@@ -44,38 +48,59 @@ class ReservaRepositorio:
 
         raise ValueError("La fecha no es válida.")
 
+
+
     @staticmethod
     def _convertir_hora(valor):
-        """Convierte una hora ISO en time."""
+        """Convierte una hora a time y rechaza zonas horarias."""
+
         if isinstance(valor, datetime):
-            valor = valor.time()
-        elif isinstance(valor, str):
-            valor = time.fromisoformat(valor.strip())
+            if valor.tzinfo is not None:
+                raise ValueError(
+                    "La hora no debe incluir una zona horaria."
+                )
 
-        if not isinstance(valor, time):
-            raise ValueError("La hora no es válida.")
+            return valor.time()
 
-        if valor.tzinfo is not None:
-            raise ValueError("La hora no debe incluir zona horaria.")
+        if isinstance(valor, time):
+            if valor.tzinfo is not None:
+                raise ValueError(
+                    "La hora no debe incluir una zona horaria."
+                )
 
-        return valor
+            return valor
+
+        if isinstance(valor, str):
+            texto = valor.strip()
+
+            for formato in ("%H:%M", "%H:%M:%S"):
+                try:
+                    return datetime.strptime(texto, formato).time()
+                except ValueError:
+                    continue
+
+        raise ValueError("La hora no es válida.")
+
+
 
     @staticmethod
     def _convertir_cantidad(valor):
-        """Convierte la cantidad recibida desde un formulario."""
+        """Convierte y valida la cantidad de personas."""
         if isinstance(valor, bool):
             raise ValueError("La cantidad de personas no es válida.")
 
-        if isinstance(valor, str):
-            valor = valor.strip()
-            if not valor:
-                raise ValueError("Indica la cantidad de personas.")
-            valor = int(valor)
+        cantidad = int(valor)
 
-        if not isinstance(valor, int) or valor < 1:
-            raise ValueError("La cantidad debe ser un entero positivo.")
+        if cantidad < 1:
+            raise ValueError(
+                "La reserva debe tener al menos una persona."
+            )
 
-        return valor
+        return cantidad
+
+    # ---------------------------------------------------------
+    # CREAR RESERVA
+    # ---------------------------------------------------------
 
     @staticmethod
     def crear_reserva(
@@ -88,18 +113,20 @@ class ReservaRepositorio:
         id_mesa=None,
     ):
         """
-        Crea una reserva y bloquea una franja que cubra
-        completamente el horario solicitado.
+        Crea una reserva y marca la franja elegida como reservada.
 
-        Devuelve la reserva creada o None si no hay una
-        franja compatible o los datos no son válidos.
+        Conserva fecha, horario y número de mesa directamente en
+        la reserva, para que sigan disponibles después de cancelarla.
         """
+
         try:
             fecha = ReservaRepositorio._convertir_fecha(fecha)
             hora_inicio = ReservaRepositorio._convertir_hora(
                 hora_inicio
             )
-            hora_fin = ReservaRepositorio._convertir_hora(hora_fin)
+            hora_fin = ReservaRepositorio._convertir_hora(
+                hora_fin
+            )
             cantidad_personas = (
                 ReservaRepositorio._convertir_cantidad(
                     cantidad_personas
@@ -109,37 +136,34 @@ class ReservaRepositorio:
             if hora_inicio >= hora_fin:
                 return None
 
-            if fecha < date.today():
+            hoy = date.today()
+
+            if fecha < hoy:
                 return None
 
-            ahora = datetime.now()
-            if fecha == ahora.date() and hora_inicio <= ahora.time():
+            if fecha == hoy and hora_inicio <= datetime.now().time():
+                return None
+
+            if id_cliente is None:
                 return None
 
             cliente = ClienteDB.get_or_none(
                 ClienteDB.id_cliente == id_cliente
             )
+
             if cliente is None:
                 return None
 
-            if id_mesa is not None:
-                if isinstance(id_mesa, str):
-                    id_mesa = id_mesa.strip()
-                    if not id_mesa:
-                        id_mesa = None
-                    else:
-                        id_mesa = int(id_mesa)
+            if id_mesa not in (None, ""):
+                id_mesa = int(id_mesa)
+            else:
+                id_mesa = None
 
             with database.atomic():
                 consulta = (
-                    Disponibilidad.select(Disponibilidad, Mesa)
-                    .join(
-                        Mesa,
-                        on=(
-                            Disponibilidad.id_mesa
-                            == Mesa.id_mesa
-                        ),
-                    )
+                    Disponibilidad
+                    .select(Disponibilidad, Mesa)
+                    .join(Mesa)
                     .where(
                         (Disponibilidad.fecha == fecha)
                         & (
@@ -151,9 +175,12 @@ class ReservaRepositorio:
                             >= hora_fin
                         )
                         & (
-                            fn.LOWER(fn.TRIM(
-                                Disponibilidad.estado_franja
-                            )) == "disponible"
+                            fn.LOWER(
+                                fn.TRIM(
+                                    Disponibilidad.estado_franja
+                                )
+                            )
+                            == "disponible"
                         )
                         & (Mesa.activa == True)
                         & (
@@ -163,149 +190,206 @@ class ReservaRepositorio:
                     )
                     .order_by(
                         Mesa.capacidad_comensales.asc(),
-                        Mesa.id_mesa.asc(),
+                        Disponibilidad.id_disponibilidad.asc(),
                     )
                     .for_update()
                 )
 
                 if id_mesa is not None:
                     consulta = consulta.where(
-                        Mesa.id_mesa == id_mesa
+                        Disponibilidad.mesa == id_mesa
                     )
 
-                franja = consulta.first()
+                franja = consulta.get_or_none()
 
                 if franja is None:
                     return None
 
+                # Guardar los datos originales en la reserva.
                 reserva = Reserva.create(
-                    id_cliente=id_cliente,
+                    cliente=cliente,
                     cantidad_personas=cantidad_personas,
                     estado="Pendiente",
                     observaciones_especiales=observaciones,
+                    fecha_reserva=fecha,
+                    hora_inicio_reserva=hora_inicio,
+                    hora_fin_reserva=hora_fin,
+                    numero_mesa_reserva=(
+                        franja.mesa.numero_mesa
+                    ),
                 )
 
+                # Vincular la disponibilidad con la reserva.
                 franja.estado_franja = "Reservada"
-                franja.id_reserva = reserva.id_reserva
+                franja.reserva = reserva
                 franja.save(
                     only=[
                         Disponibilidad.estado_franja,
-                        Disponibilidad.id_reserva,
+                        Disponibilidad.reserva,
                     ]
                 )
 
                 return reserva
 
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             return None
+
+    # ---------------------------------------------------------
+    # OBTENER TODAS LAS RESERVAS
+    # ---------------------------------------------------------
 
     @staticmethod
     def obtener_todas():
-        """Obtiene las reservas de la más reciente a la más antigua."""
+        """Devuelve todas las reservas, de la más reciente a la antigua."""
         return list(
             Reserva.select().order_by(
                 Reserva.id_reserva.desc()
             )
         )
 
+    # ---------------------------------------------------------
+    # OBTENER RESERVAS CON DATOS PARA LA ADMINISTRACION
+    # ---------------------------------------------------------
+
     @staticmethod
     def obtener_todas_con_horario():
-        """Obtiene reservas con cliente, horario y número de mesa."""
+        """
+        Devuelve las reservas con cliente, fecha, horario y mesa.
+
+        Utiliza primero los datos guardados en Reserva. Para
+        registros antiguos sin esos datos, intenta recuperarlos
+        desde la disponibilidad vinculada.
+        """
+
         resultado = []
 
-        for reserva in ReservaRepositorio.obtener_todas():
-            cliente = ClienteDB.get_or_none(
-                ClienteDB.id_cliente == reserva.id_cliente
-            )
+        reservas = (
+            Reserva
+            .select(Reserva, ClienteDB, UsuarioDB)
+            .join(ClienteDB)
+            .join(UsuarioDB)
+            .order_by(Reserva.id_reserva.desc())
+        )
 
-            nombre_cliente = "Cliente desconocido"
-            correo_cliente = ""
+        for reserva in reservas:
+            cliente = reserva.cliente
+            usuario = cliente.usuario
 
-            if cliente is not None:
-                usuario = UsuarioDB.get_or_none(
-                    UsuarioDB.id_usuario == cliente.id_usuario
+            fecha = reserva.fecha_reserva
+            hora_inicio = reserva.hora_inicio_reserva
+            hora_fin = reserva.hora_fin_reserva
+            numero_mesa = reserva.numero_mesa_reserva
+
+            # Compatibilidad con reservas antiguas cuyos campos
+            # originales todavía estén vacíos.
+            if (
+                fecha is None
+                or hora_inicio is None
+                or hora_fin is None
+                or numero_mesa is None
+            ):
+                franja = (
+                    Disponibilidad
+                    .select(Disponibilidad, Mesa)
+                    .join(Mesa)
+                    .where(
+                        Disponibilidad.reserva
+                        == reserva.id_reserva
+                    )
+                    .first()
                 )
 
-                if usuario is not None:
-                    nombre_cliente = usuario.nombre_completo
-                    correo_cliente = usuario.correo_electronico
+                if franja is not None:
+                    fecha = fecha or franja.fecha
+                    hora_inicio = (
+                        hora_inicio or franja.hora_inicio
+                    )
+                    hora_fin = hora_fin or franja.hora_fin
+                    numero_mesa = (
+                        numero_mesa
+                        if numero_mesa is not None
+                        else franja.mesa.numero_mesa
+                    )
 
-            franjas = list(
-                Disponibilidad.select().where(
-                    Disponibilidad.id_reserva
-                    == reserva.id_reserva
-                )
-            )
-
-            datos_reserva = {
-                "id_reserva": reserva.id_reserva,
-                "nombre_cliente": nombre_cliente,
-                "correo_cliente": correo_cliente,
-                "cantidad_personas": reserva.cantidad_personas,
-                "estado": reserva.estado,
-                "observaciones": reserva.observaciones_especiales,
-            }
-
-            if not franjas:
-                resultado.append({
-                    **datos_reserva,
-                    "fecha": None,
-                    "hora_inicio": None,
-                    "hora_fin": None,
-                    "numero_mesa": "",
-                })
-                continue
-
-            for franja in franjas:
-                mesa = Mesa.get_or_none(
-                    Mesa.id_mesa == franja.id_mesa
-                )
-
-                resultado.append({
-                    **datos_reserva,
-                    "fecha": franja.fecha,
-                    "hora_inicio": franja.hora_inicio,
-                    "hora_fin": franja.hora_fin,
-                    "numero_mesa": (
-                        mesa.numero_mesa if mesa is not None else ""
+            resultado.append(
+                {
+                    "id_reserva": reserva.id_reserva,
+                    "id_cliente": cliente.id_cliente,
+                    "nombre_cliente": usuario.nombre_completo,
+                    "correo": usuario.correo_electronico,
+                    "telefono": usuario.telefono,
+                    "cantidad_personas": (
+                        reserva.cantidad_personas
                     ),
-                })
+                    "estado": reserva.estado,
+                    "observaciones": (
+                        reserva.observaciones_especiales
+                    ),
+                    "fecha": fecha,
+                    "hora_inicio": hora_inicio,
+                    "hora_fin": hora_fin,
+                    "mesa": (
+                        numero_mesa
+                        if numero_mesa is not None
+                        else ""
+                    ),
+                    "fecha_creacion": reserva.fecha_creacion,
+                }
+            )
 
         return resultado
 
+    # ---------------------------------------------------------
+    # OBTENER UNA RESERVA POR ID
+    # ---------------------------------------------------------
+
     @staticmethod
     def obtener_por_id(id_reserva):
-        """Busca una reserva por su identificador."""
+        """Devuelve una reserva o None si no existe."""
         try:
             return Reserva.get(
                 Reserva.id_reserva == id_reserva
             )
-        except DoesNotExist:
+        except (DoesNotExist, TypeError, ValueError):
             return None
+
+    # ---------------------------------------------------------
+    # CAMBIAR ESTADO Y LIBERAR DISPONIBILIDAD
+    # ---------------------------------------------------------
 
     @staticmethod
     def cambiar_estado(id_reserva, nuevo_estado):
         """
-        Cambia el estado respetando las transiciones permitidas.
-        Si se cancela, libera la franja vinculada a la reserva.
+        Cambia el estado si la transición está permitida.
+
+        Al cancelar, libera las franjas vinculadas sin borrar
+        la fecha, horario ni mesa guardados en Reserva.
         """
+
         if nuevo_estado not in ReservaRepositorio.ESTADOS_VALIDOS:
             return False
 
         try:
             with database.atomic():
                 reserva = (
-                    Reserva.select()
-                    .where(Reserva.id_reserva == id_reserva)
+                    Reserva
+                    .select()
+                    .where(
+                        Reserva.id_reserva == id_reserva
+                    )
                     .for_update()
-                    .get()
+                    .get_or_none()
                 )
 
+                if reserva is None:
+                    return False
+
                 estado_actual = reserva.estado
+
                 permitidos = (
-                    ReservaRepositorio.TRANSICIONES_PERMITIDAS.get(
-                        estado_actual, set()
-                    )
+                    ReservaRepositorio
+                    .TRANSICIONES_PERMITIDAS
+                    .get(estado_actual, set())
                 )
 
                 if nuevo_estado not in permitidos:
@@ -316,12 +400,13 @@ class ReservaRepositorio:
 
                 if nuevo_estado == "Cancelada":
                     (
-                        Disponibilidad.update(
+                        Disponibilidad
+                        .update(
                             estado_franja="Disponible",
-                            id_reserva=None,
+                            reserva=None,
                         )
                         .where(
-                            Disponibilidad.id_reserva
+                            Disponibilidad.reserva
                             == reserva.id_reserva
                         )
                         .execute()
@@ -329,5 +414,5 @@ class ReservaRepositorio:
 
                 return True
 
-        except DoesNotExist:
+        except (DoesNotExist, TypeError, ValueError):
             return False
