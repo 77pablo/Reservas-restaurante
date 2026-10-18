@@ -1,4 +1,3 @@
-
 from datetime import datetime
 
 from peewee import (
@@ -19,19 +18,23 @@ from datos.conexion import db
 
 
 # ============================================================
-# MODELO BASE
+# MODELO BASE DE PERSISTENCIA
 # ============================================================
 
 class BaseModel(Model):
+    """Modelo base que comparte la conexión de la aplicación."""
+
     class Meta:
         database = db
 
 
 # ============================================================
-# CLASES DE DOMINIO: UML
+# CLASES DE DOMINIO: USUARIO, CLIENTE Y EMPLEADO
 # ============================================================
 
 class Usuario:
+    """Representa a un usuario del sistema."""
+
     def __init__(
         self,
         id_usuario=None,
@@ -86,14 +89,25 @@ class Usuario:
     def contrasena(self, valor):
         self._contrasena = valor
 
-    def iniciarSesion(self) -> bool:
-        return bool(self._correo and self._contrasena)
+    def iniciar_sesion(self) -> bool:
+        """Valida que existan los datos mínimos para iniciar sesión.
 
-    def cerrarSesion(self) -> None:
-        pass
+        La autenticación real debe realizarse en el servicio de autenticación.
+        """
+        return bool(self.correo and self.contrasena)
+
+    def cerrar_sesion(self) -> None:
+        """La gestión real de la sesión corresponde a la capa de presentación."""
+        return None
+
+    # Alias para conservar compatibilidad con el UML y llamadas anteriores.
+    iniciarSesion = iniciar_sesion  # NOSONAR
+    cerrarSesion = cerrar_sesion  # NOSONAR
 
 
 class Cliente(Usuario):
+    """Cliente del restaurante; hereda los datos comunes de Usuario."""
+
     def __init__(
         self,
         id_usuario=None,
@@ -101,38 +115,26 @@ class Cliente(Usuario):
         correo="",
         telefono="",
         contrasena="",
-        preferencias="",
+        preferencias_alimentarias="",
         puntos_fidelidad=0,
-        preferencias_alimentarias=None,
     ):
         super().__init__(
-            id_usuario,
-            nombre_completo,
-            correo,
-            telefono,
-            contrasena,
+            id_usuario=id_usuario,
+            nombre_completo=nombre_completo,
+            correo=correo,
+            telefono=telefono,
+            contrasena=contrasena,
         )
-        if preferencias_alimentarias is not None:
-            preferencias = preferencias_alimentarias
-
-        self._preferencias = preferencias
+        self._preferencias_alimentarias = preferencias_alimentarias
         self._puntos_fidelidad = puntos_fidelidad
 
     @property
-    def preferencias(self):
-        return self._preferencias
-
-    @preferencias.setter
-    def preferencias(self, valor):
-        self._preferencias = valor
-
-    @property
     def preferencias_alimentarias(self):
-        return self._preferencias
+        return self._preferencias_alimentarias
 
     @preferencias_alimentarias.setter
     def preferencias_alimentarias(self, valor):
-        self._preferencias = valor
+        self._preferencias_alimentarias = valor
 
     @property
     def puntos_fidelidad(self):
@@ -142,14 +144,22 @@ class Cliente(Usuario):
     def puntos_fidelidad(self, valor):
         self._puntos_fidelidad = valor
 
-    def solicitarReserva(self) -> None:
-        pass
+    def solicitar_reserva(self) -> bool:
+        """Indica si el cliente tiene identidad registrada para solicitar."""
+        return self.id_usuario is not None
 
-    def cancelarReserva(self, id_reserva) -> bool:
+    def cancelar_reserva(self, id_reserva):
+        """Valida el identificador; la cancelación real la hace el servicio."""
         return id_reserva is not None
+
+    # Alias para conservar compatibilidad con el UML y llamadas anteriores.
+    solicitarReserva = solicitar_reserva
+    cancelarReserva = cancelar_reserva
 
 
 class Empleado(Usuario):
+    """Empleado del restaurante; hereda los datos comunes de Usuario."""
+
     def __init__(
         self,
         id_usuario=None,
@@ -162,11 +172,11 @@ class Empleado(Usuario):
         turno="",
     ):
         super().__init__(
-            id_usuario,
-            nombre_completo,
-            correo,
-            telefono,
-            contrasena,
+            id_usuario=id_usuario,
+            nombre_completo=nombre_completo,
+            correo=correo,
+            telefono=telefono,
+            contrasena=contrasena,
         )
         self._id_empleado = id_empleado
         self._cargo = cargo
@@ -196,15 +206,21 @@ class Empleado(Usuario):
     def turno(self, valor):
         self._turno = valor
 
-    def aprobarReserva(self, id_reserva) -> bool:
+    def aprobar_reserva(self, id_reserva):
+        """Valida que se haya indicado una reserva para gestionar."""
         return id_reserva is not None
 
-    def gestionarMesas(self) -> None:
-        pass
+    def gestionar_mesas(self) -> bool:
+        """Indica si el empleado está identificado en el sistema."""
+        return self.id_empleado is not None
+
+    # Alias para conservar compatibilidad con el UML y llamadas anteriores.
+    aprobarReserva = aprobar_reserva
+    gestionarMesas = gestionar_mesas
 
 
 # ============================================================
-# PERSISTENCIA: TABLAS MYSQL
+# MODELOS DE PERSISTENCIA: TABLAS MYSQL
 # ============================================================
 
 class UsuarioDB(BaseModel):
@@ -216,14 +232,6 @@ class UsuarioDB(BaseModel):
 
     class Meta:
         table_name = "usuario"
-
-    @property
-    def correo(self):
-        return self.correo_electronico
-
-    @correo.setter
-    def correo(self, valor):
-        self.correo_electronico = valor
 
 
 class ClienteDB(BaseModel):
@@ -241,14 +249,6 @@ class ClienteDB(BaseModel):
 
     class Meta:
         table_name = "cliente"
-
-    @property
-    def preferencias(self):
-        return self.preferencias_alimentarias
-
-    @preferencias.setter
-    def preferencias(self, valor):
-        self.preferencias_alimentarias = valor
 
 
 class EmpleadoDB(BaseModel):
@@ -279,22 +279,21 @@ class Restaurant(BaseModel):
     class Meta:
         table_name = "restaurant"
 
-    @property
-    def telefono(self):
-        return self.telefono_contacto
+    def abrir_jornada(self) -> bool:
+        """Comprueba que el restaurante tenga un horario configurado."""
+        return self.horario_apertura is not None and self.horario_cierre is not None
 
-    @telefono.setter
-    def telefono(self, valor):
-        self.telefono_contacto = valor
+    def cerrar_jornada(self) -> bool:
+        """Comprueba que el restaurante tenga un horario configurado."""
+        return self.horario_apertura is not None and self.horario_cierre is not None
 
-    def abrirJornada(self) -> None:
-        pass
-
-    def cerrarJornada(self) -> None:
-        pass
+    # Alias para conservar compatibilidad con el UML y llamadas anteriores.
+    abrirJornada = abrir_jornada
+    cerrarJornada = cerrar_jornada
 
 
-# Nombre público definido en el UML.
+# Alias en español para coincidir con el nombre de la clase del UML.
+# Se conserva Restaurant para no romper importaciones existentes.
 Restaurante = Restaurant
 
 
@@ -313,12 +312,9 @@ class Zona(BaseModel):
     class Meta:
         table_name = "zona"
 
-    @property
-    def id_restaurant(self):
-        return self.restaurant_id
-
-    def agregarMesa(self, numero_mesa, capacidad, activa=True):
-        if capacidad < 1:
+    def agregar_mesa(self, numero_mesa, capacidad, activa=True):
+        """Crea una mesa asociada a esta zona."""
+        if capacidad <= 0:
             raise ValueError("La capacidad debe ser mayor que cero.")
 
         return Mesa.create(
@@ -328,8 +324,12 @@ class Zona(BaseModel):
             activa=activa,
         )
 
-    def obtenerMesas(self):
+    def obtener_mesas(self):
+        """Devuelve las mesas asociadas a esta zona."""
         return list(Mesa.select().where(Mesa.zona == self))
+
+    agregarMesa = agregar_mesa
+    obtenerMesas = obtener_mesas
 
 
 class Mesa(BaseModel):
@@ -348,44 +348,40 @@ class Mesa(BaseModel):
     class Meta:
         table_name = "mesa"
 
-    @property
-    def id_zona(self):
-        return self.zona_id
-
-    @property
-    def capacidad(self):
-        return self.capacidad_comensales
-
-    @capacidad.setter
-    def capacidad(self, valor):
-        self.capacidad_comensales = valor
-
-    def asignarReserva(self, reserva) -> None:
+    def asignar_reserva(self, reserva):
+        """Asocia esta mesa con una reserva mediante una franja disponible."""
         if not self.activa:
-            return
-
+            raise ValueError("No se puede asignar una mesa inactiva.")
         if not isinstance(reserva, Reserva):
-            raise TypeError("Se requiere una instancia de Reserva.")
+            raise TypeError("reserva debe ser una instancia de Reserva.")
 
-        franja = (
+        disponibilidad = (
             Disponibilidad.select()
             .where(
                 (Disponibilidad.mesa == self)
                 & (Disponibilidad.estado_franja == "Disponible")
-                & Disponibilidad.reserva.is_null()
+                & (Disponibilidad.reserva.is_null(True))
             )
             .first()
         )
+        if disponibilidad is None:
+            raise ValueError("No hay una franja disponible para esta mesa.")
 
-        if franja is not None:
-            franja.reserva = reserva
-            franja.estado_franja = "Reservada"
-            franja.save()
+        disponibilidad.reserva = reserva
+        disponibilidad.estado_franja = "Reservada"
+        disponibilidad.save()
+        return disponibilidad
 
-    def liberar(self) -> None:
-        # La liberación transaccional se realiza en el repositorio
-        # para evitar liberar franjas de otras reservas.
-        pass
+    asignarReserva = asignar_reserva
+
+    def liberar(self):
+        """No libera franjas directamente para evitar liberar reservas activas.
+
+        La liberación debe gestionarse desde
+        ReservaRepositorio.cambiar_estado(), que conoce la reserva concreta
+        y solo libera sus franjas cuando se cancela.
+        """
+        return 0
 
 
 class Reserva(BaseModel):
@@ -410,11 +406,8 @@ class Reserva(BaseModel):
         table_name = "reserva"
 
     @property
-    def id_cliente(self):
-        return self.cliente_id
-
-    @property
     def cant_personas(self):
+        """Alias del UML para cantidad_personas."""
         return self.cantidad_personas
 
     @cant_personas.setter
@@ -423,31 +416,37 @@ class Reserva(BaseModel):
 
     @property
     def observaciones(self):
+        """Alias del UML para observaciones_especiales."""
         return self.observaciones_especiales
 
     @observaciones.setter
     def observaciones(self, valor):
         self.observaciones_especiales = valor
 
-    def crear(self) -> bool:
-        if self.get_id() is not None:
-            return True
-        return bool(self.save(force_insert=True))
+    def crear(self):
+        """Guarda la reserva si todavía no existe en la base de datos."""
+        if self.id_reserva is not None:
+            self.save()
+            return self.id_reserva
+        self.save(force_insert=True)
+        return self.id_reserva
 
-    def actualizarEstado(self, nuevo_estado) -> bool:
-        from datos.repositorio.reserva_repositorio import (
-            ReservaRepositorio,
-        )
+    def actualizar_estado(self, nuevo_estado):
+        """Actualiza el estado usando las reglas del repositorio existente."""
+        from datos.repositorio.reserva_repositorio import ReservaRepositorio
 
-        resultado = ReservaRepositorio.cambiar_estado(
+        if self.id_reserva is None:
+            raise ValueError("La reserva debe guardarse antes de cambiar su estado.")
+
+        actualizado = ReservaRepositorio.cambiar_estado(
             self.id_reserva,
             nuevo_estado,
         )
-
-        if resultado:
+        if actualizado:
             self.estado = nuevo_estado
+        return actualizado
 
-        return bool(resultado)
+    actualizarEstado = actualizar_estado
 
 
 class Disponibilidad(BaseModel):
@@ -475,27 +474,24 @@ class Disponibilidad(BaseModel):
     class Meta:
         table_name = "disponibilidad"
 
-    @property
-    def id_mesa(self):
-        return self.mesa_id
+    def verificar_estado(self) -> str:
+        """Devuelve el estado actual de la franja."""
+        return self.estado_franja
 
-    @property
-    def id_reserva(self):
-        return self.reserva_id
-
-    def verificarEstado(self) -> bool:
-        return self.estado_franja.strip().lower() == "disponible"
-
-    def bloquearHorario(self, reserva=None) -> None:
-        if self.estado_franja.strip().lower() != "disponible":
-            return
-
+    def bloquear_horario(self, reserva=None):
+        """Marca la franja como reservada y opcionalmente la asocia."""
+        if self.estado_franja != "Disponible":
+            return False
         if reserva is not None and not isinstance(reserva, Reserva):
-            raise TypeError("Se requiere una instancia de Reserva.")
+            raise TypeError("reserva debe ser una instancia de Reserva.")
 
         self.reserva = reserva
         self.estado_franja = "Reservada"
         self.save()
+        return True
+
+    verificarEstado = verificar_estado
+    bloquearHorario = bloquear_horario
 
 
 class EmpleadoRestaurant(BaseModel):
@@ -538,7 +534,7 @@ MODELOS = [
 
 
 # ============================================================
-# UTILIDADES DE BASE DE DATOS
+# UTILIDADES
 # ============================================================
 
 def probar_conexion():
