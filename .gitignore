@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Archivos temporales de Python
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.bak
