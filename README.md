@@ -36,6 +36,22 @@ datos relacional real.
 - **unittest**: pruebas automatizadas (libreria estandar de Python).
 - **MySQL / phpMyAdmin**: motor y administracion de la base de datos.
 
+### Nota sobre la libreria de conexion a la base de datos
+
+Para conectar la aplicacion a MySQL se utiliza **PyMySQL** como driver de bajo nivel,
+en conjunto con **Peewee** como ORM. PyMySQL es una libreria escrita en Python puro,
+ampliamente adoptada por la comunidad y compatible con el protocolo de MySQL, sin
+depender de bibliotecas nativas en C. Es una alternativa estandar a
+`mysql-connector-python` (la libreria oficial de Oracle) y es recomendada oficialmente
+en la documentacion de varios frameworks y ORMs de Python (incluido Peewee) cuando se
+busca una conexion ligera, multiplataforma y facil de instalar en entornos Windows,
+como es el caso de este proyecto.
+
+Esta decision permite que toda la capa de acceso a datos (`datos/conexion`,
+`datos/modelos`, `datos/repositorio`) use una API consistente de Python para ejecutar
+consultas SQL de forma segura (parametrizada), evitando inyeccion SQL y facilitando las
+pruebas automatizadas de conexion incluidas en `pruebas/test_conexion.py`.
+
 ## 4. Arquitectura del proyecto
 
 El sistema separa responsabilidades en tres capas principales: presentacion, negocio y datos.
