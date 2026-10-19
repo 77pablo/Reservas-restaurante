@@ -1,0 +1,141 @@
+"""Reglas de negocio para la gestión de reservas."""
+
+from datos.conexion import db
+from datos.modelos.orm_models import ClienteORM, DisponibilidadORM
+from dominio.reserva import Reserva
+from repositorios.reserva_repositorio import ReservaRepositorio
+from repositorios.disponibilidad_repositorio import DisponibilidadRepositorio
+from repositorios.mesa_repositorio import MesaRepositorio
+
+
+class ReservaServicio:
+    """Coordina las operaciones de reservas."""
+
+    @staticmethod
+    def crear_reserva(
+        id_cliente,
+        id_disponibilidad,
+        cant_personas,
+        observaciones="",
+    ):
+        """Crea una reserva y ocupa su franja de forma transaccional."""
+
+        if (
+            not isinstance(cant_personas, int)
+            or isinstance(cant_personas, bool)
+            or cant_personas < 1
+        ):
+            raise ValueError(
+                "La cantidad de personas debe ser un entero positivo."
+            )
+
+        with db.atomic():
+            cliente = ClienteORM.get_or_none(
+                ClienteORM.id_cliente == id_cliente
+            )
+            if cliente is None:
+                raise ValueError("El cliente seleccionado no existe.")
+
+            franja = DisponibilidadORM.get_or_none(
+                DisponibilidadORM.id_disponibilidad == id_disponibilidad
+            )
+            if franja is None:
+                raise ValueError("La franja seleccionada no existe.")
+
+            if franja.estado_franja != "Disponible" or franja.reserva is not None:
+                raise ValueError("La franja seleccionada no está disponible.")
+
+            mesa = MesaRepositorio.obtener_por_id(franja.mesa.id_mesa)
+            if mesa is None or not mesa.activa:
+                raise ValueError("La mesa no existe o está inactiva.")
+
+            if cant_personas > mesa.capacidad:
+                raise ValueError(
+                    "La cantidad de personas supera la capacidad de la mesa."
+                )
+
+            # Reclamar la franja solo si sigue disponible y sin reserva.
+            filas = (
+                DisponibilidadORM.update(estado_franja="Ocupado")
+                .where(
+                    (DisponibilidadORM.id_disponibilidad == id_disponibilidad)
+                    & (DisponibilidadORM.estado_franja == "Disponible")
+                    & DisponibilidadORM.reserva.is_null()
+                )
+                .execute()
+            )
+            if filas != 1:
+                raise ValueError(
+                    "La franja dejó de estar disponible. Intenta otra."
+                )
+
+            reserva = Reserva(
+                id_cliente=id_cliente,
+                cant_personas=cant_personas,
+                observaciones=observaciones,
+            )
+            reserva_creada = ReservaRepositorio.crear(reserva)
+
+            if reserva_creada is None:
+                raise ValueError("No se pudo crear la reserva.")
+
+            filas = (
+                DisponibilidadORM.update(reserva=reserva_creada.id_reserva)
+                .where(
+                    (DisponibilidadORM.id_disponibilidad == id_disponibilidad)
+                    & DisponibilidadORM.reserva.is_null()
+                    & (DisponibilidadORM.estado_franja == "Ocupado")
+                )
+                .execute()
+            )
+            if filas != 1:
+                raise ValueError(
+                    "No se pudo asociar la franja a la reserva."
+                )
+
+            return reserva_creada
+
+    @staticmethod
+    def obtener_reserva(id_reserva):
+        """Obtiene una reserva por su identificador."""
+        return ReservaRepositorio.obtener_por_id(id_reserva)
+
+    @staticmethod
+    def listar_reservas():
+        """Lista todas las reservas."""
+        return ReservaRepositorio.listar_todas()
+
+    @staticmethod
+    def cambiar_estado(id_reserva, nuevo_estado):
+        """Actualiza el estado y libera la franja al cancelar."""
+
+        with db.atomic():
+            reserva = ReservaRepositorio.obtener_por_id(id_reserva)
+            if reserva is None:
+                raise ValueError("La reserva no existe.")
+
+            if not reserva.actualizarEstado(nuevo_estado):
+                raise ValueError(
+                    f"No se permite cambiar de '{reserva.estado}' "
+                    f"a '{nuevo_estado}'."
+                )
+
+            modelo = ReservaRepositorio.modelo_orm
+            filas = (
+                modelo.update(estado=nuevo_estado)
+                .where(modelo.id_reserva == id_reserva)
+                .execute()
+            )
+            if filas != 1:
+                raise ValueError("No se pudo actualizar la reserva.")
+
+            if nuevo_estado == "Cancelada":
+                liberada = DisponibilidadRepositorio.liberar_franja(
+                    id_reserva
+                )
+                if not liberada:
+                    raise ValueError(
+                        "No se pudo liberar la franja de la reserva."
+                    )
+
+            return True
