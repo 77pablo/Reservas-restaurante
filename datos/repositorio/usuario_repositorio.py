@@ -1,6 +1,6 @@
 from datos.modelos.orm_models import UsuarioORM
 from dominio.usuario import Usuario
-from repositorios.base_repositorio import BaseRepositorio
+from datos.repositorio.base_repositorio import BaseRepositorio
 
 
 class UsuarioRepositorio(BaseRepositorio):

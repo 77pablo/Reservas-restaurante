@@ -2,7 +2,7 @@ from peewee import IntegrityError
 
 from datos.modelos.orm_models import EmpleadoORM, UsuarioORM
 from dominio.empleado import Empleado
-from repositorios.base_repositorio import BaseRepositorio
+from datos.repositorio.base_repositorio import BaseRepositorio
 
 
 class EmpleadoRepositorio(BaseRepositorio):

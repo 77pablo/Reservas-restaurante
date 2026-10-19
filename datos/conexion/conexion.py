@@ -21,7 +21,7 @@ from decouple import Config, RepositoryEnv
 # Carga del archivo .env desde la raiz del proyecto
 # (sin importar desde que carpeta se ejecute Python)
 # ============================================================
-RUTA_ENV = Path(__file__).resolve().parents[1] / ".env"
+RUTA_ENV = Path(__file__).resolve().parents[2] / ".env"
 
 if not RUTA_ENV.exists():
     raise FileNotFoundError(

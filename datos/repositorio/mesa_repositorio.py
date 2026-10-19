@@ -1,6 +1,6 @@
 from datos.modelos.orm_models import MesaORM
 from dominio.mesa import Mesa
-from repositorios.base_repositorio import BaseRepositorio
+from datos.repositorio.base_repositorio import BaseRepositorio
 
 
 class MesaRepositorio(BaseRepositorio):

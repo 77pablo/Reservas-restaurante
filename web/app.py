@@ -15,13 +15,13 @@ from dominio.mesa import Mesa
 from dominio.reserva import Reserva
 from dominio.disponibilidad import Disponibilidad
 
-from repositorios.cliente_repositorio import ClienteRepositorio
-from repositorios.empleado_repositorio import EmpleadoRepositorio
-from repositorios.restaurant_repositorio import RestaurantRepositorio
-from repositorios.zona_repositorio import ZonaRepositorio
-from repositorios.mesa_repositorio import MesaRepositorio
-from repositorios.disponibilidad_repositorio import DisponibilidadRepositorio
-from repositorios.reserva_repositorio import ReservaRepositorio
+from datos.repositorio.cliente_repositorio import ClienteRepositorio
+from datos.repositorio.empleado_repositorio import EmpleadoRepositorio
+from datos.repositorio.restaurant_repositorio import RestaurantRepositorio
+from datos.repositorio.zona_repositorio import ZonaRepositorio
+from datos.repositorio.mesa_repositorio import MesaRepositorio
+from datos.repositorio.disponibilidad_repositorio import DisponibilidadRepositorio
+from datos.repositorio.reserva_repositorio import ReservaRepositorio
 
 from negocio.servicios.disponibilidad_servicio import DisponibilidadServicio
 from negocio.servicios.reserva_servicio import ReservaServicio

@@ -1,6 +1,6 @@
 from datos.modelos.orm_models import DisponibilidadORM
 from dominio.disponibilidad import Disponibilidad
-from repositorios.base_repositorio import BaseRepositorio
+from datos.repositorio.base_repositorio import BaseRepositorio
 
 
 class DisponibilidadRepositorio(BaseRepositorio):

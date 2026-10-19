@@ -1,7 +1,7 @@
 from datos.modelos.orm_models import ReservaORM
 from dominio.reserva import Reserva
-from repositorios.base_repositorio import BaseRepositorio
-from repositorios.disponibilidad_repositorio import DisponibilidadRepositorio
+from datos.repositorio.base_repositorio import BaseRepositorio
+from datos.repositorio.disponibilidad_repositorio import DisponibilidadRepositorio
 
 
 class ReservaRepositorio(BaseRepositorio):

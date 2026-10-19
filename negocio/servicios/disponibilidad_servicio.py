@@ -2,10 +2,10 @@
 
 from datetime import date, time
 
-from repositorios.disponibilidad_repositorio import (
+from datos.repositorio.disponibilidad_repositorio import (
     DisponibilidadRepositorio,
 )
-from repositorios.mesa_repositorio import MesaRepositorio
+from datos.repositorio.mesa_repositorio import MesaRepositorio
 
 
 class DisponibilidadServicio:

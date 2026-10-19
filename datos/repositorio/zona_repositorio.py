@@ -1,6 +1,6 @@
 from datos.modelos.orm_models import ZonaORM
 from dominio.zona import Zona
-from repositorios.base_repositorio import BaseRepositorio
+from datos.repositorio.base_repositorio import BaseRepositorio
 
 
 class ZonaRepositorio(BaseRepositorio):

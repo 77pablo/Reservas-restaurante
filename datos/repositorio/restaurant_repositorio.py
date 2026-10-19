@@ -1,6 +1,6 @@
 from datos.modelos.orm_models import RestaurantORM
 from dominio.restaurant import Restaurant
-from repositorios.base_repositorio import BaseRepositorio
+from datos.repositorio.base_repositorio import BaseRepositorio
 
 
 class RestaurantRepositorio(BaseRepositorio):

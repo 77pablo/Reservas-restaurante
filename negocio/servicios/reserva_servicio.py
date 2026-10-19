@@ -3,9 +3,9 @@
 from datos.conexion import db
 from datos.modelos.orm_models import ClienteORM, DisponibilidadORM
 from dominio.reserva import Reserva
-from repositorios.reserva_repositorio import ReservaRepositorio
-from repositorios.disponibilidad_repositorio import DisponibilidadRepositorio
-from repositorios.mesa_repositorio import MesaRepositorio
+from datos.repositorio.reserva_repositorio import ReservaRepositorio
+from datos.repositorio.disponibilidad_repositorio import DisponibilidadRepositorio
+from datos.repositorio.mesa_repositorio import MesaRepositorio
 
 
 class ReservaServicio:
