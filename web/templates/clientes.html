@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block titulo %}Clientes{% endblock %}
+{% block contenido %}
+<h1 class="mb-4">Clientes</h1>
+
+<div class="card mb-4">
+  <div class="card-header">Registrar nuevo cliente</div>
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Nombre completo</label>
+        <input type="text" name="nombre_completo" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Correo</label>
+        <input type="email" name="correo" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Telefono</label>
+        <input type="text" name="telefono" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Contrasena</label>
+        <input type="password" name="contrasena" class="form-control" minlength="6" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Preferencias</label>
+        <input type="text" name="preferencias" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Puntos de fidelidad</label>
+        <input type="number" name="puntos_fidelidad" class="form-control" value="0" min="0">
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Registrar cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped table-bordered bg-white align-middle">
+  <thead>
+    <tr>
+      <th>ID</th><th>Nombre</th><th>Correo</th><th>Telefono</th>
+      <th>Preferencias</th><th>Puntos</th><th>Actualizar puntos</th><th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cliente in clientes %}
+    <tr>
+      <td>{{ cliente.id_cliente }}</td>
+      <td>{{ cliente.nombre_completo }}</td>
+      <td>{{ cliente.correo }}</td>
+      <td>{{ cliente.telefono }}</td>
+      <td>{{ cliente.preferencias }}</td>
+      <td>{{ cliente.puntos_fidelidad }}</td>
+      <td>
+        <form method="post" action="{{ url_for('actualizar_puntos', id_cliente=cliente.id_cliente) }}" class="d-flex gap-2">
+          <input type="number" name="puntos_fidelidad" class="form-control form-control-sm" style="width:90px" value="{{ cliente.puntos_fidelidad }}" min="0">
+          <button type="submit" class="btn btn-sm btn-outline-secondary">Actualizar</button>
+        </form>
+      </td>
+      <td>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('editar_cliente', id_cliente=cliente.id_cliente) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+          <form method="post" action="{{ url_for('eliminar_cliente', id_cliente=cliente.id_cliente) }}" onsubmit="return confirm('Seguro que deseas eliminar este cliente?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="text-center">No hay clientes registrados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

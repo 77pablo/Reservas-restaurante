@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Mesas de {{ zona.nombre_zona }}{% endblock %}
+{% block contenido %}
+<a href="{{ url_for('zonas_restaurante', id_restaurant=zona.id_restaurant) }}" class="btn btn-link mb-3">&larr; Volver a zonas</a>
+<h1 class="mb-4">Mesas de "{{ zona.nombre_zona }}"</h1>
+
+<div class="card mb-4">
+  <div class="card-header">Registrar nueva mesa</div>
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Numero de mesa</label>
+        <input type="number" name="numero_mesa" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Capacidad</label>
+        <input type="number" name="capacidad" class="form-control" min="1" required>
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="activa" id="activa" checked>
+          <label class="form-check-label" for="activa">Activa</label>
+        </div>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Registrar mesa</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped table-bordered bg-white align-middle">
+  <thead>
+    <tr><th>ID</th><th>N Mesa</th><th>Capacidad</th><th>Activa</th><th>Acciones</th></tr>
+  </thead>
+  <tbody>
+    {% for mesa in mesas %}
+    <tr>
+      <td>{{ mesa.id_mesa }}</td>
+      <td>{{ mesa.numero_mesa }}</td>
+      <td>{{ mesa.capacidad }}</td>
+      <td>{{ "Si" if mesa.activa else "No" }}</td>
+      <td>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('editar_mesa', id_mesa=mesa.id_mesa) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+          <form method="post" action="{{ url_for('eliminar_mesa', id_mesa=mesa.id_mesa) }}" onsubmit="return confirm('Seguro que deseas eliminar esta mesa?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="text-center">No hay mesas registradas.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

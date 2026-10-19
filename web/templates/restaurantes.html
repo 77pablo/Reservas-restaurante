@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block titulo %}Restaurantes{% endblock %}
+{% block contenido %}
+<h1 class="mb-4">Restaurantes</h1>
+
+<div class="card mb-4">
+  <div class="card-header">Registrar nuevo restaurante</div>
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="nombre" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Direccion</label>
+        <input type="text" name="direccion" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Telefono</label>
+        <input type="text" name="telefono" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Hora de apertura</label>
+        <input type="time" name="horario_apertura" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Hora de cierre</label>
+        <input type="time" name="horario_cierre" class="form-control" required>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-warning">Registrar restaurante</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped table-bordered bg-white align-middle">
+  <thead>
+    <tr><th>ID</th><th>Nombre</th><th>Direccion</th><th>Telefono</th><th>Apertura</th><th>Cierre</th><th>Zonas</th><th>Acciones</th></tr>
+  </thead>
+  <tbody>
+    {% for restaurant in restaurantes %}
+    <tr>
+      <td>{{ restaurant.id_restaurant }}</td>
+      <td>{{ restaurant.nombre }}</td>
+      <td>{{ restaurant.direccion }}</td>
+      <td>{{ restaurant.telefono }}</td>
+      <td>{{ restaurant.horario_apertura }}</td>
+      <td>{{ restaurant.horario_cierre }}</td>
+      <td><a href="{{ url_for('zonas_restaurante', id_restaurant=restaurant.id_restaurant) }}" class="btn btn-sm btn-outline-dark">Ver zonas</a></td>
+      <td>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('editar_restaurante', id_restaurant=restaurant.id_restaurant) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+          <form method="post" action="{{ url_for('eliminar_restaurante', id_restaurant=restaurant.id_restaurant) }}" onsubmit="return confirm('Seguro que deseas eliminar este restaurante? Se eliminaran tambien sus zonas y mesas.');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="text-center">No hay restaurantes registrados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

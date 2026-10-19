@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Editar Restaurante{% endblock %}
+{% block contenido %}
+<a href="{{ url_for('restaurantes') }}" class="btn btn-link mb-3">&larr; Volver a restaurantes</a>
+<h1 class="mb-4">Editar restaurante</h1>
+<div class="card">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="nombre" class="form-control" value="{{ restaurant.nombre }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Direccion</label>
+        <input type="text" name="direccion" class="form-control" value="{{ restaurant.direccion }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Telefono</label>
+        <input type="text" name="telefono" class="form-control" value="{{ restaurant.telefono }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Hora de apertura</label>
+        <input type="time" name="horario_apertura" class="form-control" value="{{ restaurant.horario_apertura }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Hora de cierre</label>
+        <input type="time" name="horario_cierre" class="form-control" value="{{ restaurant.horario_cierre }}" required>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-warning">Guardar cambios</button>
+        <a href="{{ url_for('restaurantes') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

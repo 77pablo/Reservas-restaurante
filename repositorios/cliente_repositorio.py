@@ -1,4 +1,3 @@
-
 from peewee import IntegrityError
 
 from datos.modelos.orm_models import ClienteORM, UsuarioORM
@@ -31,7 +30,6 @@ class ClienteRepositorio(BaseRepositorio):
     def crear(cls, cliente: Cliente):
         correo = cliente.correo.strip().lower()
 
-        # Buscar un usuario existente por correo.
         usuario_registro = UsuarioORM.get_or_none(
             UsuarioORM.correo == correo
         )
@@ -45,7 +43,6 @@ class ClienteRepositorio(BaseRepositorio):
                     contrasena=cliente.contrasena,
                 )
             except IntegrityError:
-                # Si otro proceso lo creó simultáneamente, volver a buscarlo.
                 usuario_registro = UsuarioORM.get_or_none(
                     UsuarioORM.correo == correo
                 )
@@ -54,7 +51,6 @@ class ClienteRepositorio(BaseRepositorio):
 
         cliente.id_usuario = usuario_registro.id_usuario
 
-        # Si ya existe un cliente asociado al usuario, reutilizarlo.
         cliente_registro = cls.modelo_orm.get_or_none(
             cls.modelo_orm.usuario == usuario_registro.id_usuario
         )
@@ -91,3 +87,38 @@ class ClienteRepositorio(BaseRepositorio):
             .execute()
         )
         return filas > 0
+
+    @classmethod
+    def actualizar(cls, cliente: Cliente):
+        """Actualiza los datos del usuario base y del cliente asociado."""
+        if cliente.id_cliente is None:
+            return False
+
+        registro = cls.modelo_orm.get_or_none(
+            cls.modelo_orm.id_cliente == cliente.id_cliente
+        )
+        if registro is None:
+            return False
+
+        usuario_registro = registro.usuario
+        usuario_registro.nombre_completo = cliente.nombre_completo
+        usuario_registro.correo = cliente.correo.strip().lower()
+        usuario_registro.telefono = cliente.telefono
+        usuario_registro.contrasena = cliente.contrasena
+        usuario_registro.save()
+
+        registro.preferencias = cliente.preferencias
+        registro.puntos_fidelidad = cliente.puntos_fidelidad
+        registro.save()
+        return True
+
+    @classmethod
+    def eliminar(cls, id_cliente):
+        """Elimina el registro de cliente (y en cascada sus reservas)."""
+        registro = cls.modelo_orm.get_or_none(
+            cls.modelo_orm.id_cliente == id_cliente
+        )
+        if registro is None:
+            return False
+        registro.delete_instance(recursive=True)
+        return True

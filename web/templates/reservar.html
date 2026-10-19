@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block titulo %}Reservar una mesa{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-danger text-white">
+        <h3 class="mb-0">Reservar una mesa</h3>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">
+          Indica cuantas personas son y el horario que necesitas.
+          El sistema buscara automaticamente una mesa disponible con capacidad suficiente.
+        </p>
+        <form method="post" class="row g-3">
+          <div class="col-md-12">
+            <label class="form-label">Cliente</label>
+            <select name="id_cliente" class="form-select" required>
+              <option value="" disabled selected>Selecciona tu cuenta</option>
+              {% for cliente in clientes %}
+              <option value="{{ cliente.id_cliente }}">{{ cliente.nombre_completo }} ({{ cliente.correo }})</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">
+              No tienes cuenta? <a href="{{ url_for('clientes') }}">Registrate aqui</a>.
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Cantidad de personas</label>
+            <input type="number" name="cant_personas" class="form-control" min="1" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Fecha</label>
+            <input type="date" name="fecha" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Desde</label>
+            <input type="time" name="hora_inicio" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Hasta</label>
+            <input type="time" name="hora_fin" class="form-control" required>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Observaciones (opcional)</label>
+            <input type="text" name="observaciones" class="form-control" placeholder="Ej: celebracion de cumpleanos, silla para bebe, etc.">
+          </div>
+
+          <div class="col-12">
+            <button type="submit" class="btn btn-danger btn-lg w-100">Buscar mesa y reservar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

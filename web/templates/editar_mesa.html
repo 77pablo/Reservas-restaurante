@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Editar Mesa{% endblock %}
+{% block contenido %}
+<a href="{{ url_for('mesas_zona', id_zona=mesa.id_zona) }}" class="btn btn-link mb-3">&larr; Volver a mesas</a>
+<h1 class="mb-4">Editar mesa</h1>
+<div class="card">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Numero de mesa</label>
+        <input type="number" name="numero_mesa" class="form-control" value="{{ mesa.numero_mesa }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Capacidad</label>
+        <input type="number" name="capacidad" class="form-control" value="{{ mesa.capacidad }}" min="1" required>
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="activa" id="activa" {% if mesa.activa %}checked{% endif %}>
+          <label class="form-check-label" for="activa">Activa</label>
+        </div>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a href="{{ url_for('mesas_zona', id_zona=mesa.id_zona) }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

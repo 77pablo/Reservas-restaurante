@@ -1,4 +1,5 @@
-"""Clase Empleado - hereda de Usuario (reutilizacion de codigo)."""
+"""Clase Empleado - hereda de Usuario (reutilizacion de codigo) y
+sobrescribe metodos para demostrar polimorfismo."""
 from dominio.usuario import Usuario
 
 
@@ -44,3 +45,22 @@ class Empleado(Usuario):
         """void."""
         print(f"[Empleado] {self.nombre_completo} gestiona "
               f"{len(self._mesas_asignadas)} mesa(s).")
+
+    # ---------- Sobrescritura de metodos (polimorfismo) ----------
+
+    def obtener_rol(self):
+        return "Empleado"
+
+    def realizar_accion_principal(self):
+        return (f"{self.nombre_completo} (Empleado - {self._cargo}, turno "
+                f"{self._turno}) gestiona {len(self._mesas_asignadas)} mesa(s) "
+                f"y puede aprobar reservas.")
+
+    def cerrarSesion(self):
+        """Sobrescribe el metodo de Usuario, extendiendo su comportamiento."""
+        super().cerrarSesion()
+        print(f"[Empleado] Turno '{self._turno}' finalizado.")
+
+    def __str__(self):
+        return (f"Empleado(id={self.id_usuario}, nombre='{self.nombre_completo}', "
+                f"cargo='{self._cargo}')")

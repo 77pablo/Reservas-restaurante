@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Editar Reserva{% endblock %}
+{% block contenido %}
+<a href="{{ url_for('reservas') }}" class="btn btn-link mb-3">&larr; Volver a reservas</a>
+<h1 class="mb-4">Editar reserva #{{ reserva.id_reserva }}</h1>
+<div class="card">
+  <div class="card-body">
+    <p class="text-muted">
+      ID Cliente: {{ reserva.id_cliente }} | Estado actual:
+      <span class="badge
+        {% if reserva.estado == 'Pendiente' %}bg-warning text-dark
+        {% elif reserva.estado == 'Confirmada' %}bg-success
+        {% elif reserva.estado == 'Cancelada' %}bg-danger
+        {% else %}bg-secondary{% endif %}">
+        {{ reserva.estado }}
+      </span>
+      <br>
+      <small>El estado se cambia desde el listado de reservas; aqui solo se editan los datos de la reserva.</small>
+    </p>
+    <form method="post" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Cantidad de personas</label>
+        <input type="number" name="cant_personas" class="form-control" value="{{ reserva.cant_personas }}" min="1" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Observaciones</label>
+        <input type="text" name="observaciones" class="form-control" value="{{ reserva.observaciones }}">
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-danger">Guardar cambios</button>
+        <a href="{{ url_for('reservas') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

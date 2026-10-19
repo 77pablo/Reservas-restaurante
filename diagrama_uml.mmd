@@ -1,0 +1,108 @@
+classDiagram
+    %% Herencia (reutilizacion de codigo)
+    Usuario <|-- Cliente : Herencia
+    Usuario <|-- Empleado : Herencia
+
+    %% Asociaciones con cardinalidad
+    Restaurant "1" --> "*" Zona : tiene zonas
+    Zona "1" --> "*" Mesa : contiene mesas
+    Mesa "1" --> "*" Disponibilidad : tiene franjas
+    Reserva "1" --> "*" Disponibilidad : ocupa franjas
+    Cliente "1" --> "*" Reserva : genera reservas
+
+    class Usuario {
+        <<clase base>>
+        -_id_usuario: int
+        -_nombre_completo: str
+        -_correo: str
+        -_telefono: str
+        -_contrasena: str
+        +iniciarSesion(correo, contrasena) bool
+        +cerrarSesion() void
+        +obtener_rol() str
+        +realizar_accion_principal() str
+    }
+
+    class Cliente {
+        -_id_cliente: int
+        -_preferencias: str
+        -_puntos_fidelidad: int
+        -_reservas: List~Reserva~
+        +solicitarReserva(reserva) void
+        +cancelarReserva(id_reserva) bool
+        +obtener_rol() str
+        +realizar_accion_principal() str
+        +cerrarSesion() void
+    }
+
+    class Empleado {
+        -_id_empleado: int
+        -_cargo: str
+        -_turno: str
+        -_mesas_asignadas: List~Mesa~
+        +aprobarReserva(reserva) bool
+        +gestionarMesas() void
+        +obtener_rol() str
+        +realizar_accion_principal() str
+        +cerrarSesion() void
+    }
+
+    class Restaurant {
+        -_id_restaurant: int
+        -_nombre: str
+        -_direccion: str
+        -_telefono: str
+        -_horario_apertura: time
+        -_horario_cierre: time
+        -_zonas: List~Zona~
+        +agregarZona(zona) void
+        +abrirJornada() void
+        +cerrarJornada() void
+    }
+
+    class Zona {
+        -_id_zona: int
+        -_id_restaurant: int
+        -_nombre_zona: str
+        -_permite_fumadores: bool
+        -_mesas: List~Mesa~
+        +agregarMesa(mesa) void
+        +obtenerMesas() List~Mesa~
+    }
+
+    class Mesa {
+        -_id_mesa: int
+        -_id_zona: int
+        -_numero_mesa: int
+        -_capacidad: int
+        -_activa: bool
+        -_disponibilidades: List~Disponibilidad~
+        -_reserva_actual: Reserva
+        +asignarReserva(reserva) void
+        +liberar() void
+    }
+
+    class Reserva {
+        -_id_reserva: int
+        -_id_cliente: int
+        -_fecha_creacion: datetime
+        -_cant_personas: int
+        -_estado: str
+        -_observaciones: str
+        -_disponibilidades: List~Disponibilidad~
+        +crear() bool
+        +actualizarEstado(estado) bool
+        +agregarDisponibilidad(disponibilidad) void
+    }
+
+    class Disponibilidad {
+        -_id_disponibilidad: int
+        -_id_mesa: int
+        -_id_reserva: int
+        -_fecha: date
+        -_hora_inicio: time
+        -_hora_fin: time
+        -_estado_franja: str
+        +verificarEstado() bool
+        +bloquearHorario() void
+    }

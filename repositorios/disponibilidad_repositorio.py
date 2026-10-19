@@ -55,3 +55,13 @@ class DisponibilidadRepositorio(BaseRepositorio):
         filas = (cls.modelo_orm.update(estado_franja="Disponible", reserva=None)
                  .where(cls.modelo_orm.reserva == id_reserva).execute())
         return filas > 0
+
+    @classmethod
+    def eliminar(cls, id_disponibilidad):
+        registro = cls.modelo_orm.get_or_none(
+            cls.modelo_orm.id_disponibilidad == id_disponibilidad
+        )
+        if registro is None:
+            return False
+        registro.delete_instance()
+        return True

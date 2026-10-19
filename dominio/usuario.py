@@ -62,8 +62,25 @@ class Usuario:
                 and self._contrasena == contrasena_ingresada)
 
     def cerrarSesion(self):
-        """void."""
+        """void. Metodo base: las subclases lo sobrescriben (polimorfismo)."""
         print(f"[Sesion] {self._nombre_completo} cerro sesion.")
+
+    def obtener_rol(self):
+        """Metodo polimorfico: cada subclase retorna su propio rol.
+
+        En la clase base retorna un valor generico; Cliente y Empleado
+        lo sobrescriben para demostrar polimorfismo por sobrescritura.
+        """
+        return "Usuario"
+
+    def realizar_accion_principal(self):
+        """Metodo polimorfico: comportamiento por defecto.
+
+        Cliente y Empleado sobrescriben este metodo con su propia logica,
+        de modo que una misma llamada produce resultados distintos segun
+        el tipo real del objeto (polimorfismo en tiempo de ejecucion).
+        """
+        return f"{self._nombre_completo} no tiene una accion principal definida."
 
     def __str__(self):
         return f"Usuario(id={self._id_usuario}, nombre='{self._nombre_completo}')"

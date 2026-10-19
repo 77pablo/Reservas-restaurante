@@ -1,4 +1,3 @@
-
 from peewee import IntegrityError
 
 from datos.modelos.orm_models import EmpleadoORM, UsuarioORM
@@ -31,7 +30,6 @@ class EmpleadoRepositorio(BaseRepositorio):
     def crear(cls, empleado: Empleado):
         correo = empleado.correo.strip().lower()
 
-        # Reutilizar el usuario si el correo ya existe.
         usuario_registro = UsuarioORM.get_or_none(
             UsuarioORM.correo == correo
         )
@@ -45,7 +43,6 @@ class EmpleadoRepositorio(BaseRepositorio):
                     contrasena=empleado.contrasena,
                 )
             except IntegrityError:
-                # Recuperarse si el usuario se creó simultáneamente.
                 usuario_registro = UsuarioORM.get_or_none(
                     UsuarioORM.correo == correo
                 )
@@ -54,7 +51,6 @@ class EmpleadoRepositorio(BaseRepositorio):
 
         empleado.id_usuario = usuario_registro.id_usuario
 
-        # Evitar duplicar el empleado asociado a ese usuario.
         empleado_registro = cls.modelo_orm.get_or_none(
             cls.modelo_orm.usuario == usuario_registro.id_usuario
         )
@@ -82,3 +78,36 @@ class EmpleadoRepositorio(BaseRepositorio):
             cls._a_dominio(registro)
             for registro in cls.modelo_orm.select()
         ]
+
+    @classmethod
+    def actualizar(cls, empleado: Empleado):
+        if empleado.id_empleado is None:
+            return False
+
+        registro = cls.modelo_orm.get_or_none(
+            cls.modelo_orm.id_empleado == empleado.id_empleado
+        )
+        if registro is None:
+            return False
+
+        usuario_registro = registro.usuario
+        usuario_registro.nombre_completo = empleado.nombre_completo
+        usuario_registro.correo = empleado.correo.strip().lower()
+        usuario_registro.telefono = empleado.telefono
+        usuario_registro.contrasena = empleado.contrasena
+        usuario_registro.save()
+
+        registro.cargo = empleado.cargo
+        registro.turno = empleado.turno
+        registro.save()
+        return True
+
+    @classmethod
+    def eliminar(cls, id_empleado):
+        registro = cls.modelo_orm.get_or_none(
+            cls.modelo_orm.id_empleado == id_empleado
+        )
+        if registro is None:
+            return False
+        registro.delete_instance(recursive=True)
+        return True

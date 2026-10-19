@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio - Sistema de Reservas{% endblock %}
+{% block contenido %}
+<div class="p-5 mb-4 bg-danger text-white rounded-3 text-center">
+  <h1 class="display-6">Quieres reservar una mesa?</h1>
+  <p class="lead">Indica cuantas personas son y el horario que buscas, nosotros te asignamos la mesa.</p>
+  <a href="{{ url_for('reservar_mesa') }}" class="btn btn-light btn-lg">Reservar ahora</a>
+</div>
+
+<h2 class="mb-4">Panel administrativo</h2>
+<div class="row g-3">
+  <div class="col-md-3">
+    <div class="card text-bg-primary">
+      <div class="card-body">
+        <h5 class="card-title">Clientes</h5>
+        <p class="display-6">{{ total_clientes }}</p>
+        <a href="{{ url_for('clientes') }}" class="btn btn-light btn-sm">Ver clientes</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-success">
+      <div class="card-body">
+        <h5 class="card-title">Empleados</h5>
+        <p class="display-6">{{ total_empleados }}</p>
+        <a href="{{ url_for('empleados') }}" class="btn btn-light btn-sm">Ver empleados</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-warning">
+      <div class="card-body">
+        <h5 class="card-title">Restaurantes</h5>
+        <p class="display-6">{{ total_restaurantes }}</p>
+        <a href="{{ url_for('restaurantes') }}" class="btn btn-dark btn-sm">Ver restaurantes</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-danger">
+      <div class="card-body">
+        <h5 class="card-title">Reservas</h5>
+        <p class="display-6">{{ total_reservas }}</p>
+        <a href="{{ url_for('reservas') }}" class="btn btn-light btn-sm">Ver reservas</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

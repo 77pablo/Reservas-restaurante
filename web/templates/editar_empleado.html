@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Editar Empleado{% endblock %}
+{% block contenido %}
+<a href="{{ url_for('empleados') }}" class="btn btn-link mb-3">&larr; Volver a empleados</a>
+<h1 class="mb-4">Editar empleado</h1>
+<div class="card">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Nombre completo</label>
+        <input type="text" name="nombre_completo" class="form-control" value="{{ empleado.nombre_completo }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Correo</label>
+        <input type="email" name="correo" class="form-control" value="{{ empleado.correo }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Telefono</label>
+        <input type="text" name="telefono" class="form-control" value="{{ empleado.telefono }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Contrasena</label>
+        <input type="password" name="contrasena" class="form-control" value="{{ empleado.contrasena }}" minlength="6" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Cargo</label>
+        <input type="text" name="cargo" class="form-control" value="{{ empleado.cargo }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Turno</label>
+        <input type="text" name="turno" class="form-control" value="{{ empleado.turno }}" required>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-success">Guardar cambios</button>
+        <a href="{{ url_for('empleados') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

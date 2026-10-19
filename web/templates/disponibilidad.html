@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block titulo %}Disponibilidad{% endblock %}
+{% block contenido %}
+<h1 class="mb-4">Franjas de disponibilidad</h1>
+
+<div class="card mb-4">
+  <div class="card-header">Registrar nueva franja</div>
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Mesa</label>
+        <select name="id_mesa" class="form-select" required>
+          <option value="" disabled selected>Selecciona una mesa</option>
+          {% for mesa in mesas %}
+          <option value="{{ mesa.id_mesa }}">Mesa #{{ mesa.numero_mesa }} (ID {{ mesa.id_mesa }}) - Cap. {{ mesa.capacidad }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Fecha</label>
+        <input type="date" name="fecha" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Hora inicio</label>
+        <input type="time" name="hora_inicio" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Hora fin</label>
+        <input type="time" name="hora_fin" class="form-control" required>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Registrar franja</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped table-bordered bg-white align-middle">
+  <thead>
+    <tr><th>ID</th><th>ID Mesa</th><th>Fecha</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>ID Reserva</th><th>Acciones</th></tr>
+  </thead>
+  <tbody>
+    {% for franja in franjas %}
+    <tr>
+      <td>{{ franja.id_disponibilidad }}</td>
+      <td>{{ franja.id_mesa }}</td>
+      <td>{{ franja.fecha }}</td>
+      <td>{{ franja.hora_inicio }}</td>
+      <td>{{ franja.hora_fin }}</td>
+      <td>
+        <span class="badge {{ 'bg-success' if franja.estado_franja == 'Disponible' else 'bg-secondary' }}">
+          {{ franja.estado_franja }}
+        </span>
+      </td>
+      <td>{{ franja.id_reserva or "-" }}</td>
+      <td>
+        <form method="post" action="{{ url_for('eliminar_disponibilidad', id_disponibilidad=franja.id_disponibilidad) }}" onsubmit="return confirm('Seguro que deseas eliminar esta franja?');">
+          <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="text-center">No hay franjas registradas.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

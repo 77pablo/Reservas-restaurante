@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Editar Cliente{% endblock %}
+{% block contenido %}
+<a href="{{ url_for('clientes') }}" class="btn btn-link mb-3">&larr; Volver a clientes</a>
+<h1 class="mb-4">Editar cliente</h1>
+<div class="card">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Nombre completo</label>
+        <input type="text" name="nombre_completo" class="form-control" value="{{ cliente.nombre_completo }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Correo</label>
+        <input type="email" name="correo" class="form-control" value="{{ cliente.correo }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Telefono</label>
+        <input type="text" name="telefono" class="form-control" value="{{ cliente.telefono }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Contrasena</label>
+        <input type="password" name="contrasena" class="form-control" value="{{ cliente.contrasena }}" minlength="6" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Preferencias</label>
+        <input type="text" name="preferencias" class="form-control" value="{{ cliente.preferencias }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Puntos de fidelidad</label>
+        <input type="number" name="puntos_fidelidad" class="form-control" value="{{ cliente.puntos_fidelidad }}" min="0">
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a href="{{ url_for('clientes') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

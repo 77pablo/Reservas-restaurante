@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Editar Zona{% endblock %}
+{% block contenido %}
+<a href="{{ url_for('zonas_restaurante', id_restaurant=zona.id_restaurant) }}" class="btn btn-link mb-3">&larr; Volver a zonas</a>
+<h1 class="mb-4">Editar zona</h1>
+<div class="card">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Nombre de la zona</label>
+        <input type="text" name="nombre_zona" class="form-control" value="{{ zona.nombre_zona }}" required>
+      </div>
+      <div class="col-md-6 d-flex align-items-end">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="permite_fumadores" id="permite_fumadores" {% if zona.permite_fumadores %}checked{% endif %}>
+          <label class="form-check-label" for="permite_fumadores">Permite fumadores</label>
+        </div>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a href="{{ url_for('zonas_restaurante', id_restaurant=zona.id_restaurant) }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

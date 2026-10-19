@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios - Polimorfismo{% endblock %}
+{% block contenido %}
+<h1 class="mb-3">Demostracion de polimorfismo</h1>
+<p class="text-muted">
+  Clientes y Empleados son tratados aqui de forma uniforme como objetos
+  <code>Usuario</code>. Al llamar a los mismos metodos
+  (<code>obtener_rol()</code> y <code>realizar_accion_principal()</code>)
+  sobre cada uno, el resultado difiere segun el tipo real del objeto en
+  tiempo de ejecucion, porque Cliente y Empleado sobrescriben esos metodos
+  heredados de la clase base Usuario.
+</p>
+
+<table class="table table-striped table-bordered bg-white">
+  <thead>
+    <tr><th>Nombre</th><th>Correo</th><th>Rol (obtener_rol)</th><th>Accion principal (realizar_accion_principal)</th></tr>
+  </thead>
+  <tbody>
+    {% for resultado in resultados %}
+    <tr>
+      <td>{{ resultado.nombre }}</td>
+      <td>{{ resultado.correo }}</td>
+      <td>
+        <span class="badge {{ 'bg-primary' if resultado.rol == 'Cliente' else 'bg-success' }}">
+          {{ resultado.rol }}
+        </span>
+      </td>
+      <td>{{ resultado.accion }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="text-center">No hay clientes ni empleados registrados todavia.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -22,7 +22,7 @@ class ReservaRepositorio(BaseRepositorio):
 
     @classmethod
     def crear(cls, reserva: Reserva):
-        if not reserva.crear():  # Valida reglas de negocio del dominio
+        if not reserva.crear():
             return None
 
         registro = cls.modelo_orm.create(
@@ -66,9 +66,31 @@ class ReservaRepositorio(BaseRepositorio):
         return filas > 0
 
     @classmethod
+    def actualizar_datos(cls, id_reserva, cant_personas=None, observaciones=None):
+        """Actualiza campos editables de la reserva (no su estado)."""
+        campos = {}
+        if cant_personas is not None:
+            if cant_personas < 1:
+                return False
+            campos["cant_personas"] = cant_personas
+        if observaciones is not None:
+            campos["observaciones"] = observaciones
+
+        if not campos:
+            return False
+
+        filas = (
+            cls.modelo_orm.update(**campos)
+            .where(cls.modelo_orm.id_reserva == id_reserva)
+            .execute()
+        )
+        return filas > 0
+
+    @classmethod
     def eliminar(cls, id_reserva):
         registro = cls.modelo_orm.get_or_none(cls.modelo_orm.id_reserva == id_reserva)
         if registro is None:
             return False
+        DisponibilidadRepositorio.liberar_franja(id_reserva)
         registro.delete_instance()
         return True
