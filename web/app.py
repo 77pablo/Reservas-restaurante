@@ -1,5 +1,6 @@
 """Interfaz web (Flask) para probar el sistema de reservas en localhost."""
 import os
+from datetime import datetime
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 
@@ -21,6 +22,9 @@ from repositorios.zona_repositorio import ZonaRepositorio
 from repositorios.mesa_repositorio import MesaRepositorio
 from repositorios.disponibilidad_repositorio import DisponibilidadRepositorio
 from repositorios.reserva_repositorio import ReservaRepositorio
+
+from negocio.servicios.disponibilidad_servicio import DisponibilidadServicio
+from negocio.servicios.reserva_servicio import ReservaServicio
 
 
 app = Flask(__name__)
@@ -62,14 +66,18 @@ def reservar_mesa():
         try:
             id_cliente = int(request.form["id_cliente"])
             cant_personas = int(request.form["cant_personas"])
-            fecha = request.form["fecha"]
-            hora_inicio = request.form["hora_inicio"]
-            hora_fin = request.form["hora_fin"]
+            fecha_txt = request.form["fecha"]
+            hora_inicio_txt = request.form["hora_inicio"]
+            hora_fin_txt = request.form["hora_fin"]
             observaciones = request.form.get("observaciones", "")
 
-            if not fecha or not hora_inicio or not hora_fin:
+            if not fecha_txt or not hora_inicio_txt or not hora_fin_txt:
                 flash("Debes indicar fecha, hora de inicio y hora de termino.", "danger")
                 return redirect(url_for("reservar_mesa"))
+
+            fecha = datetime.strptime(fecha_txt, "%Y-%m-%d").date()
+            hora_inicio = _a_hora(hora_inicio_txt)
+            hora_fin = _a_hora(hora_fin_txt)
 
             if hora_fin <= hora_inicio:
                 flash("La hora de termino debe ser posterior a la hora de inicio.", "danger")
@@ -84,9 +92,16 @@ def reservar_mesa():
             franja_asignada = None
 
             for mesa in mesas_candidatas:
-                franja = DisponibilidadRepositorio.buscar_franja_disponible(
-                    mesa.id_mesa, fecha, hora_inicio, hora_fin
-                )
+                try:
+                    franja = DisponibilidadServicio.buscar_franja(
+                        id_mesa=mesa.id_mesa,
+                        fecha=fecha,
+                        hora_inicio=hora_inicio,
+                        hora_fin=hora_fin,
+                    )
+                except ValueError:
+                    continue
+
                 if franja is not None:
                     mesa_asignada = mesa
                     franja_asignada = franja
@@ -95,41 +110,45 @@ def reservar_mesa():
             if mesa_asignada is None:
                 flash(
                     f"No hay mesas disponibles para {cant_personas} persona(s) "
-                    f"el {fecha} entre las {hora_inicio} y las {hora_fin}. "
+                    f"el {fecha_txt} entre las {hora_inicio_txt} y las {hora_fin_txt}. "
                     "Intenta con otra fecha u horario.",
                     "warning",
                 )
                 return redirect(url_for("reservar_mesa"))
 
-            reserva = Reserva(
+            reserva_creada = ReservaServicio.crear_reserva(
                 id_cliente=id_cliente,
+                id_disponibilidad=franja_asignada.id_disponibilidad,
                 cant_personas=cant_personas,
                 observaciones=observaciones,
-            )
-            reserva_creada = ReservaRepositorio.crear(reserva)
-
-            if reserva_creada is None:
-                flash("No se pudo crear la reserva: datos invalidos.", "danger")
-                return redirect(url_for("reservar_mesa"))
-
-            DisponibilidadRepositorio.ocupar_franja(
-                franja_asignada.id_disponibilidad, reserva_creada.id_reserva
             )
 
             flash(
                 f"Reserva #{reserva_creada.id_reserva} confirmada: Mesa "
                 f"#{mesa_asignada.numero_mesa} (capacidad {mesa_asignada.capacidad}) "
-                f"el {fecha} de {hora_inicio} a {hora_fin}.",
+                f"el {fecha_txt} de {hora_inicio_txt} a {hora_fin_txt}.",
                 "success",
             )
             return redirect(url_for("reservar_mesa"))
 
+        except ValueError as error:
+            flash(f"No se pudo crear la reserva: {error}", "danger")
+            return redirect(url_for("reservar_mesa"))
         except Exception as error:
             flash(f"Error al procesar la reserva: {error}", "danger")
             return redirect(url_for("reservar_mesa"))
 
     return render_template("reservar.html", clientes=clientes_lista)
 
+
+def _a_hora(valor):
+    """Convierte 'HH:MM' o 'HH:MM:SS' en un objeto time."""
+    for formato in ("%H:%M", "%H:%M:%S"):
+        try:
+            return datetime.strptime(valor, formato).time()
+        except ValueError:
+            continue
+    raise ValueError(f"Hora invalida: {valor}")
 
 # ---------------------- Clientes (CRUD completo) ----------------------
 
