@@ -4,4 +4,4 @@ __pycache__/
 venv/
 .venv/
 *.egg-info/
-.vscode/
+.vscode/dump_proyecto.txt
