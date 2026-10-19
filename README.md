@@ -1,538 +1,265 @@
-# Reservas-restaurante
+# Sistema de Reservas de Restaurante
 
+Aplicacion para gestionar reservas de mesas en un restaurante, desarrollada en Python aplicando
+programacion orientada a objetos, con interfaz de consola y una interfaz web (Flask), usando
+Peewee como ORM y MySQL (administrado via phpMyAdmin) como motor de base de datos.
 
+## 1. Descripcion del proyecto
 
-\# Sistema de Reservas de Restaurante
+El sistema permite registrar clientes y empleados, administrar restaurantes, zonas y mesas,
+gestionar la disponibilidad horaria y registrar reservas con asignacion automatica de mesa
+segun capacidad y horario solicitado.
 
+Este proyecto se desarrolla para la asignatura de Programacion Orientada a Objetos Seguro y
+aplica los cuatro pilares de la POO (abstraccion, encapsulamiento, herencia y polimorfismo),
+ademas de una arquitectura en capas (presentacion, negocio y datos) conectada a una base de
+datos relacional real.
 
+## 2. Objetivos
 
-Aplicación web para gestionar reservas de mesas en un restaurante, desarrollada en Python con Flask, Peewee y MySQL.
+- Registrar clientes y empleados con sus datos basicos.
+- Administrar restaurantes, zonas y mesas.
+- Registrar franjas de disponibilidad por mesa, fecha y horario.
+- Registrar reservas indicando cliente, cantidad de personas y horario, con asignacion
+  automatica de mesa disponible.
+- Gestionar los estados de una reserva (Pendiente, Confirmada, Cancelada, Completada).
+- Separar el codigo en capas (presentacion, negocio, datos) con clases reutilizables.
+- Verificar el funcionamiento mediante pruebas automatizadas.
 
+## 3. Tecnologias utilizadas
 
+- **Python 3.12**: lenguaje principal.
+- **Peewee**: ORM para interactuar con MySQL.
+- **PyMySQL**: driver de conexion a MySQL.
+- **Flask**: framework para la interfaz web.
+- **python-decouple**: lectura de variables de entorno (.env).
+- **unittest**: pruebas automatizadas (libreria estandar de Python).
+- **MySQL / phpMyAdmin**: motor y administracion de la base de datos.
 
-\## 1. Descripción del proyecto
+## 4. Arquitectura del proyecto
 
+El sistema separa responsabilidades en tres capas principales: presentacion, negocio y datos.
 
+### Dominio
 
-El sistema permite registrar reservas, consultar las reservas existentes y gestionar sus estados. También mantiene información sobre clientes, mesas, horarios y disponibilidad.
+Ubicacion: `dominio/`
 
+Contiene las clases de negocio puras (sin dependencias de base de datos ni de interfaz),
+que representan el modelo UML del sistema:
 
+- `dominio/usuario.py` (clase base)
+- `dominio/cliente.py` (hereda de Usuario)
+- `dominio/empleado.py` (hereda de Usuario)
+- `dominio/restaurant.py`
+- `dominio/zona.py`
+- `dominio/mesa.py`
+- `dominio/reserva.py`
+- `dominio/disponibilidad.py`
 
-Este proyecto se desarrolla para la asignatura de Programación Orientada a Objetos Seguro y busca aplicar principios de programación orientada a objetos, separación de responsabilidades, persistencia de datos y validación de información.
+### Presentacion
 
+Ubicacion: `presentacion/` y `web/`
 
+El proyecto ofrece dos interfaces de usuario que comparten la misma capa de negocio:
 
-\## 2. Objetivos
+- **Consola**: `presentacion/menu.py`, iniciada desde `main.py`. Menu navegable de 15
+  opciones para gestionar clientes, empleados, restaurantes, zonas, mesas, disponibilidad
+  y reservas.
+- **Web**: `web/app.py`, interfaz Flask con plantillas en `web/templates/`. Incluye una
+  vista publica de reserva (`/reservar`) con asignacion automatica de mesa, y vistas de
+  administracion (CRUD) para cada entidad.
 
+### Negocio
 
+Ubicacion: `negocio/servicios/`
 
-\- Registrar reservas indicando cliente, fecha, horario y cantidad de personas.
+Contiene los servicios que coordinan las reglas de negocio y son usados tanto por la
+consola como por la interfaz web, evitando duplicar logica:
 
-\- Consultar las reservas y sus datos asociados.
+- `negocio/servicios/reserva_servicio.py`: creacion de reservas (transaccional) y cambios
+  de estado.
+- `negocio/servicios/disponibilidad_servicio.py`: busqueda de franjas horarias disponibles.
 
-\- Gestionar los estados de una reserva.
+### Acceso a datos
 
-\- Verificar la disponibilidad y la capacidad de las mesas.
+Ubicacion: `datos/` y `repositorios/`
 
-\- Mantener los datos históricos de las reservas.
+- `datos/conexion.py`: configuracion de la conexion a MySQL mediante Peewee.
+- `datos/modelos/orm_models.py`: modelos ORM (persistencia) de las 8 entidades.
+- `repositorios/`: un repositorio por entidad (`ClienteRepositorio`, `EmpleadoRepositorio`,
+  `RestaurantRepositorio`, `ZonaRepositorio`, `MesaRepositorio`, `DisponibilidadRepositorio`,
+  `ReservaRepositorio`), todos heredando operaciones comunes de `BaseRepositorio`.
 
-\- Organizar el código mediante capas y clases reutilizables.
+### Pruebas
 
-\- Comprobar el funcionamiento mediante pruebas automatizadas.
+Ubicacion: `pruebas/`
 
+Pruebas automatizadas con `unittest`:
 
+- `pruebas/test_conexion.py`: verifica la conexion a MySQL y la existencia de las tablas.
+- `pruebas/test_reserva_servicio.py`: verifica reglas de negocio (validaciones de cantidad
+  de personas, cliente inexistente, mesa inexistente, horarios invalidos).
 
-\## 3. Tecnologías utilizadas
+## 5. Modelos y entidades principales
 
+### Usuario
 
+Clase base con nombre, correo, contrasena y telefono. Define metodos polimorficos
+`obtener_rol()` y `realizar_accion_principal()`.
 
-\- \*\*Python:\*\* lenguaje principal.
+### Cliente (hereda de Usuario)
 
-\- \*\*Flask:\*\* framework para la aplicación web.
+Anade preferencias alimentarias y puntos de fidelidad. Sobrescribe los metodos
+polimorficos de Usuario.
 
-\- \*\*Peewee:\*\* ORM para interactuar con la base de datos.
+### Empleado (hereda de Usuario)
 
-\- \*\*MySQL:\*\* sistema de gestión de base de datos.
+Anade cargo y turno laboral. Sobrescribe los metodos polimorficos de Usuario.
 
-\- \*\*python-decouple:\*\* lectura de parámetros de configuración.
+### Restaurant
 
-\- \*\*unittest:\*\* ejecución de pruebas automatizadas.
+Nombre, direccion, telefono y horarios de apertura y cierre.
 
+### Zona
 
+Pertenece a un Restaurant. Indica si permite fumadores.
 
-\## 4. Arquitectura del proyecto
+### Mesa
 
+Pertenece a una Zona. Numero, capacidad de comensales y estado activo/inactivo.
 
+### Disponibilidad
 
-El sistema separa las responsabilidades en distintas capas.
+Franja horaria asociada a una Mesa, con fecha, hora de inicio, hora de fin y estado
+(Disponible / Ocupado), y opcionalmente asociada a una Reserva.
 
+### Reserva
 
+Realizada por un Cliente. Incluye cantidad de personas, estado, observaciones y fecha
+de creacion.
 
-\### Presentación
+> Nota: el diagrama UML de este proyecto no incluye una relacion directa entre Empleado
+> y Restaurant; la asignacion de personal no forma parte del alcance actual.
 
+## 6. Estados de las reservas
 
+- Pendiente
+- Confirmada
+- Cancelada
+- Completada
 
-Ubicación: `presentacion/`
+Las transiciones permitidas se controlan en `dominio/reserva.py` y se aplican en
+`ReservaServicio.cambiar_estado`. Una reserva pendiente puede confirmarse o cancelarse.
+Una reserva confirmada puede cancelarse o completarse. Las reservas canceladas o
+completadas no admiten nuevas transiciones.
 
+Al cancelar una reserva, el sistema libera la franja de disponibilidad asociada.
 
-
-Contiene la aplicación Flask y las plantillas HTML que permiten al usuario interactuar con el sistema.
-
-
-
-Archivos principales:
-
-
-
-\- `presentacion/app.py`
-
-\- `presentacion/templates/index.html`
-
-\- `presentacion/templates/reservar.html`
-
-\- `presentacion/templates/reservas.html`
-
-
-
-\### Negocio
-
-
-
-Ubicación: `negocio/servicios/`
-
-
-
-Contiene los servicios que coordinan las operaciones del sistema.
-
-
-
-Archivo principal:
-
-
-
-\- `negocio/servicios/reserva\_servicio.py`
-
-
-
-\### Acceso a datos
-
-
-
-Ubicación: `datos/`
-
-
-
-Contiene la configuración de conexión a MySQL, los modelos de persistencia y los repositorios.
-
-
-
-Archivos principales:
-
-
-
-\- `datos/conexion.py`
-
-\- `datos/modelos/models.py`
-
-\- `datos/repositorio/cliente\_repositorio.py`
-
-\- `datos/repositorio/reserva\_repositorio.py`
-
-
-
-\### Pruebas
-
-
-
-Ubicación: `pruebas/`
-
-
-
-Contiene las pruebas automatizadas del proyecto.
-
-
-
-\- `pruebas/test\_conexion.py`
-
-\- `pruebas/test\_reserva\_repositorio.py`
-
-
-
-\## 5. Modelos y entidades principales
-
-
-
-\### Usuario
-
-
-
-Representa la información común de los usuarios, como nombre, correo electrónico, contraseña y teléfono.
-
-
-
-\### Cliente
-
-
-
-Hereda de `Usuario` y añade preferencias alimentarias y puntos de fidelidad.
-
-
-
-\### Empleado
-
-
-
-Hereda de `Usuario` e incorpora información laboral, como cargo y fecha de contratación.
-
-
-
-\### Restaurant
-
-
-
-Representa el restaurante, su dirección, nombre, teléfono y horarios de apertura y cierre.
-
-
-
-\### Zona
-
-
-
-Representa una zona del restaurante y se relaciona con el restaurante correspondiente.
-
-
-
-\### Mesa
-
-
-
-Representa una mesa, su número, capacidad de comensales y estado de actividad.
-
-
-
-\### Reserva
-
-
-
-Representa una reserva realizada por un cliente. Incluye cantidad de personas, estado, observaciones y datos históricos de fecha, horario y mesa.
-
-
-
-\### Disponibilidad
-
-
-
-Representa las franjas horarias asociadas a las mesas y permite registrar si una franja está disponible o reservada.
-
-
-
-\### EmpleadoRestaurant
-
-
-
-Representa la asociación entre empleados y restaurantes, incluyendo el turno correspondiente.
-
-
-
-Los modelos de dominio y los modelos de persistencia se encuentran diferenciados en `datos/modelos/models.py`.
-
-
-
-\## 6. Estados de las reservas
-
-
-
-El sistema contempla los siguientes estados:
-
-
-
-\- `Pendiente`
-
-\- `Confirmada`
-
-\- `Cancelada`
-
-\- `Completada`
-
-
-
-Las transiciones permitidas se controlan en `ReservaRepositorio`.
-
-
-
-Una reserva pendiente puede confirmarse o cancelarse. Una reserva confirmada puede cancelarse o completarse. Las reservas canceladas o completadas no admiten nuevas transiciones según las reglas actuales.
-
-
-
-Al cancelar una reserva, el sistema libera la franja de disponibilidad asociada y conserva los datos históricos guardados en la reserva.
-
-
-
-\## 7. Base de datos
-
-
+## 7. Base de datos
 
 Nombre de la base de datos: `reserva-restaurante`
 
+Administrada mediante MySQL y visualizada/gestionada con phpMyAdmin. La conexion se
+configura en `datos/conexion.py` utilizando Peewee y PyMySQL, con parametros leidos
+desde variables de entorno.
 
+Tablas principales: `usuario`, `cliente`, `empleado`, `restaurant`, `zona`, `mesa`,
+`reserva`, `disponibilidad`.
 
-La conexión se configura en `datos/conexion.py` utilizando Peewee y parámetros externos.
+## 8. Configuracion del entorno
 
+### Requisitos previos
 
+- Python 3.12 instalado.
+- MySQL Server en ejecucion (gestionado con phpMyAdmin).
+- Base de datos `reserva-restaurante` creada.
+- Dependencias de `requirements.txt` instaladas.
 
-Entre las tablas principales se encuentran:
+### Variables de entorno
 
+Crea un archivo `.env` en la raiz (puedes basarte en `.env.example`) con:DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=reserva-restaurante
+DB_USER=root
+DB_PASS=tu_password
+SECRET_KEY=una_clave_secreta 
 
+El archivo `.env` no debe subirse al repositorio.
 
-\- `usuario`
+### Instalar dependencias
+pip install -r requirements.txt
+## 9. Ejecutar la aplicacion
 
-\- `cliente`
+### Interfaz de consola
 
-\- `empleado`
+Desde la raiz del proyecto:
+python main.py
 
-\- `restaurant`
+Muestra un menu navegable con 15 opciones para gestionar clientes, empleados,
+restaurantes, zonas, mesas, disponibilidad y reservas.
 
-\- `zona`
+### Interfaz web
 
-\- `mesa`
+Desde la raiz del proyecto:
+python -m web.app
 
-\- `reserva`
+Luego abre en el navegador:http://127.0.0.1:5000/
 
-\- `disponibilidad`
+Rutas principales:
 
-\- `empleado\_restaurant`
+- `/`: panel con conteos generales.
+- `/reservar`: formulario publico de reserva con asignacion automatica de mesa.
+- `/clientes`, `/empleados`, `/restaurantes`, `/disponibilidad`, `/reservas`: administracion
+  CRUD de cada entidad.
+- `/usuarios`: demostracion de polimorfismo entre Cliente y Empleado.
 
+## 10. Ejecutar las pruebas
 
+Desde la raiz del proyecto:python -m unittest discover -s pruebas -v
 
-La estructura debe existir previamente en MySQL y ser compatible con los modelos definidos en el proyecto.
+Actualmente se ejecutan 15 pruebas automatizadas que verifican la conexion a MySQL, la
+existencia de las tablas principales y las reglas de negocio de creacion de reservas y
+busqueda de disponibilidad.
 
+## 11. Validaciones y comportamiento
 
+El servicio de reservas (`ReservaServicio`) valida, entre otras reglas:
 
-\## 8. Configuración del entorno
+- Que la cantidad de personas sea un entero positivo.
+- Que el cliente exista.
+- Que la franja de disponibilidad exista y este libre.
+- Que la mesa este activa y tenga capacidad suficiente.
+- Que los cambios de estado respeten las transiciones permitidas.
 
+La creacion de una reserva y la ocupacion de su franja se realizan dentro de una
+transaccion de base de datos (`db.atomic()`), evitando condiciones de carrera.
 
+## 12. Seguridad y buenas practicas
 
-\### Requisitos previos
+- Las credenciales se mantienen fuera del codigo fuente, en `.env` (ignorado por git).
+- Se usan consultas del ORM (Peewee) en lugar de SQL concatenado.
+- Las operaciones de escritura relevantes se ejecutan dentro de transacciones.
+- Se mantiene un archivo `.gitignore` para evitar subir archivos temporales, cache de
+  Python y credenciales.
 
+## 13. Diagrama UML
 
+El diagrama de clases del sistema se encuentra en la raiz del repositorio:
 
-\- Python instalado.
+- `diagrama_uml.mmd`: codigo fuente del diagrama (formato Mermaid).
+- `diagrama_uml.png`: imagen exportada del diagrama.
 
-\- MySQL Server en ejecución.
+## 14. Limitaciones y mejoras futuras
 
-\- Una base de datos compatible llamada `reserva-restaurante`.
+- Completar pruebas funcionales end-to-end de la interfaz web.
+- Anadir servicios de negocio para clientes, empleados, restaurantes, zonas y mesas
+  (actualmente solo reservas y disponibilidad pasan explicitamente por la capa de negocio).
+- Implementar autenticacion y autorizacion para las funciones administrativas.
+- Reorganizar `datos/` con subcarpetas internas (repositorio, sql, auxiliares) segun la
+  estructura objetivo de la asignatura.
 
-\- Las dependencias de Python instaladas.
+## 15. Autoria
 
+Proyecto academico: Sistema de Reservas de Restaurante.
 
-
-\### Configurar las credenciales
-
-
-
-El archivo `datos/conexion.py` obtiene la configuración mediante `python-decouple`.
-
-
-
-Los parámetros utilizados para la conexión son:
-
-
-
-\- `database`
-
-\- `host`
-
-\- `port`
-
-\- `user`
-
-\- `password`
-
-
-
-Configura estos valores en el archivo de entorno que utiliza el proyecto. No publiques contraseñas ni credenciales reales en el repositorio.
-
-
-
-También configura la clave secreta de Flask según el nombre que utilice `presentacion/app.py`.
-
-
-
-\### Instalar dependencias
-
-
-
-Activa tu entorno virtual, si utilizas uno, e instala las dependencias del proyecto.
-
-
-
-Las dependencias deben corresponder a los módulos que importa la aplicación y a tu controlador MySQL. Puedes revisar los imports de los archivos antes de instalar paquetes adicionales.
-
-
-
-\## 9. Ejecutar la aplicación
-
-
-
-Desde la carpeta raíz del proyecto, ejecuta:
-
-
-
-```powershell
-
-python -m presentacion.app
-
-```
-
-
-
-Después abre en el navegador la dirección local configurada por Flask:
-
-
-
-`http://127.0.0.1:5055/`
-
-
-
-Las rutas principales son:
-
-
-
-\- `/`: página de inicio.
-
-\- `/reservar`: formulario de creación de reservas.
-
-\- `/reservas`: administración de reservas.
-
-\- `/reservas/<id\_reserva>/estado`: gestión del estado de una reserva.
-
-\- `/salud`: ruta de comprobación de la aplicación.
-
-
-
-\## 10. Ejecutar las pruebas
-
-
-
-Desde la raíz del proyecto, ejecuta:
-
-
-
-```powershell
-
-python -m unittest discover -s pruebas -v
-
-```
-
-
-
-Las pruebas actuales comprueban la conexión a MySQL, la existencia de las tablas principales, la conversión y validación de fechas y horas, y las reglas permitidas para las transiciones de estado.
-
-
-
-La salida `OK` indica que las pruebas descubiertas se ejecutaron sin fallos. Esto no significa que todas las funcionalidades estén cubiertas por pruebas automatizadas.
-
-
-
-\## 11. Validaciones y comportamiento
-
-
-
-El repositorio de reservas comprueba, entre otras reglas:
-
-
-
-\- Que la cantidad de personas sea válida.
-
-\- Que la fecha no esté en el pasado.
-
-\- Que la hora de inicio sea anterior a la hora de término.
-
-\- Que exista un cliente registrado.
-
-\- Que la franja horaria esté disponible.
-
-\- Que la mesa esté activa y tenga capacidad suficiente.
-
-\- Que los cambios de estado respeten las transiciones permitidas.
-
-
-
-La creación de una reserva y el bloqueo de su franja se realizan dentro de una transacción de base de datos.
-
-
-
-\## 12. Seguridad y buenas prácticas
-
-
-
-\- Mantener las credenciales fuera del código fuente.
-
-\- No publicar archivos de entorno con contraseñas.
-
-\- Validar los datos enviados mediante formularios.
-
-\- Utilizar consultas del ORM en lugar de construir consultas SQL con valores concatenados.
-
-\- Mantener la protección CSRF habilitada en los formularios que modifican información.
-
-\- Verificar las reglas de autorización antes de permitir acciones administrativas.
-
-\- Ejecutar las pruebas antes de entregar cambios.
-
-\- Mantener copias de seguridad antes de modificar la estructura o los datos de la base de datos.
-
-
-
-\## 13. Limitaciones y mejoras futuras
-
-
-
-Las siguientes mejoras pueden incorporarse a medida que avance el proyecto:
-
-
-
-\- Completar las pruebas funcionales de creación, confirmación y cancelación de reservas.
-
-\- Añadir pruebas de integración para la disponibilidad y asignación de mesas.
-
-\- Documentar el diagrama UML y sus relaciones.
-
-\- Mejorar el encapsulamiento de las clases donde corresponda.
-
-\- Implementar autenticación y autorización para las funciones administrativas.
-
-\- Incorporar documentación de instalación y dependencias verificadas.
-
-\- Completar los datos históricos de reservas antiguas únicamente cuando exista evidencia fiable.
-
-
-
-\## 14. Estado de las pruebas
-
-
-
-Durante el desarrollo se ejecutaron 14 pruebas automatizadas con resultado satisfactorio.
-
-
-
-También se comprobó manualmente el registro de una reserva y su cancelación, verificando que sus datos históricos se conservaran y que la franja asociada volviera a estar disponible.
-
-
-
-Estas comprobaciones son evidencia parcial del funcionamiento y deben complementarse con las pruebas que exija la evaluación académica.
-
-
-
-\## 15. Autoría
-
-
-
-Proyecto académico: Sistema de Reservas de Restaurante.
-
-
-
-Asignatura: Programación Orientada a Objetos Seguro.
-
-
-
+Asignatura: Programacion Orientada a Objetos Seguro.
