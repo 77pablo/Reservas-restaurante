@@ -103,3 +103,32 @@ CREATE TABLE disponibilidad (
     FOREIGN KEY (id_mesa) REFERENCES mesa(id_mesa) ON DELETE CASCADE,
     FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva) ON DELETE SET NULL
 ) ENGINE=InnoDB COMMENT='Franjas horarias de disponibilidad por mesa';
+-- ============================================
+-- PASO 3: Datos de ejemplo (datos reales del proyecto)
+-- ============================================
+SET FOREIGN_KEY_CHECKS = 0;
+INSERT INTO `usuario` (`id_usuario`, `nombre_completo`, `correo`, `telefono`, `contrasena`) VALUES ('1', 'Pablo Espinoza', 'pablo.espinoza@correo.cl', '+56912345678', 'password123');
+INSERT INTO `usuario` (`id_usuario`, `nombre_completo`, `correo`, `telefono`, `contrasena`) VALUES ('2', 'Ana Torres', 'ana.torres@ecotech.cl', '+56987654321', 'clave12345');
+INSERT INTO `cliente` (`id_cliente`, `id_usuario`, `preferencias`, `puntos_fidelidad`) VALUES ('1', '1', 'Sin restricciones', '100');
+INSERT INTO `empleado` (`id_empleado`, `id_usuario`, `cargo`, `turno`) VALUES ('1', '2', 'Jefe de comedor', 'Tarde');
+INSERT INTO `restaurant` (`id_restaurant`, `nombre`, `direccion`, `telefono`, `horario_apertura`, `horario_cierre`) VALUES ('1', 'EcoTech Bistro', 'Av. Siempre Verde 123, Temuco', '+56912345000', '12:00:00', '23:00:00');
+INSERT INTO `restaurant` (`id_restaurant`, `nombre`, `direccion`, `telefono`, `horario_apertura`, `horario_cierre`) VALUES ('2', 'EcoTech Bistro', 'Av. Siempre Verde 123, Temuco', '+56912345000', '12:00:00', '23:00:00');
+INSERT INTO `restaurant` (`id_restaurant`, `nombre`, `direccion`, `telefono`, `horario_apertura`, `horario_cierre`) VALUES ('3', 'EcoTech Bistro', 'Av. Siempre Verde 123, Temuco', '+56912345000', '12:00:00', '23:00:00');
+INSERT INTO `restaurant` (`id_restaurant`, `nombre`, `direccion`, `telefono`, `horario_apertura`, `horario_cierre`) VALUES ('4', 'EcoTech Bistro', 'Av. Siempre Verde 123, Temuco', '+56912345000', '12:00:00', '23:00:00');
+INSERT INTO `restaurant` (`id_restaurant`, `nombre`, `direccion`, `telefono`, `horario_apertura`, `horario_cierre`) VALUES ('5', 'AP', 'los alerces', '+569832323', '10:00:00', '02:00:00');
+INSERT INTO `zona` (`id_zona`, `id_restaurant`, `nombre_zona`, `permite_fumadores`) VALUES ('1', '1', 'Terraza', '0');
+INSERT INTO `zona` (`id_zona`, `id_restaurant`, `nombre_zona`, `permite_fumadores`) VALUES ('2', '2', 'Terraza', '0');
+INSERT INTO `zona` (`id_zona`, `id_restaurant`, `nombre_zona`, `permite_fumadores`) VALUES ('3', '3', 'Terraza', '0');
+INSERT INTO `zona` (`id_zona`, `id_restaurant`, `nombre_zona`, `permite_fumadores`) VALUES ('4', '4', 'Terraza', '0');
+INSERT INTO `mesa` (`id_mesa`, `id_zona`, `numero_mesa`, `capacidad`, `activa`) VALUES ('1', '1', '1', '4', '1');
+INSERT INTO `mesa` (`id_mesa`, `id_zona`, `numero_mesa`, `capacidad`, `activa`) VALUES ('2', '2', '1', '4', '1');
+INSERT INTO `mesa` (`id_mesa`, `id_zona`, `numero_mesa`, `capacidad`, `activa`) VALUES ('3', '3', '1', '4', '1');
+INSERT INTO `mesa` (`id_mesa`, `id_zona`, `numero_mesa`, `capacidad`, `activa`) VALUES ('4', '4', '1', '4', '1');
+INSERT INTO `reserva` (`id_reserva`, `id_cliente`, `fecha_creacion`, `cant_personas`, `estado`, `observaciones`) VALUES ('1', '1', '2026-10-18 23:38:57', '4', 'Confirmada', 'Celebracion de cumpleanos');
+INSERT INTO `reserva` (`id_reserva`, `id_cliente`, `fecha_creacion`, `cant_personas`, `estado`, `observaciones`) VALUES ('2', '1', '2026-10-19 14:24:04', '4', 'Confirmada', 'Celebracion de cumpleanos');
+INSERT INTO `disponibilidad` (`id_disponibilidad`, `id_mesa`, `id_reserva`, `fecha`, `hora_inicio`, `hora_fin`, `estado_franja`) VALUES ('1', '1', '1', '2026-10-18', '19:00:00', '21:00:00', 'Ocupado');
+INSERT INTO `disponibilidad` (`id_disponibilidad`, `id_mesa`, `id_reserva`, `fecha`, `hora_inicio`, `hora_fin`, `estado_franja`) VALUES ('2', '2', NULL, '2026-10-19', '19:00:00', '21:00:00', 'Disponible');
+INSERT INTO `disponibilidad` (`id_disponibilidad`, `id_mesa`, `id_reserva`, `fecha`, `hora_inicio`, `hora_fin`, `estado_franja`) VALUES ('3', '3', NULL, '2026-10-19', '19:00:00', '21:00:00', 'Disponible');
+INSERT INTO `disponibilidad` (`id_disponibilidad`, `id_mesa`, `id_reserva`, `fecha`, `hora_inicio`, `hora_fin`, `estado_franja`) VALUES ('4', '4', '2', '2026-10-19', '19:00:00', '21:00:00', 'Ocupado');
+INSERT INTO `disponibilidad` (`id_disponibilidad`, `id_mesa`, `id_reserva`, `fecha`, `hora_inicio`, `hora_fin`, `estado_franja`) VALUES ('5', '1', NULL, '2026-10-19', '19:00:00', '21:00:00', 'Disponible');
+SET FOREIGN_KEY_CHECKS = 1;

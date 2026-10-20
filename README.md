@@ -98,13 +98,15 @@ consola como por la interfaz web, evitando duplicar logica:
 
 ### Acceso a datos
 
-Ubicacion: `datos/` y `repositorios/`
+Ubicacion: `datos/`
 
-- `datos/conexion.py`: configuracion de la conexion a MySQL mediante Peewee.
+- `datos/conexion/conexion.py`: configuracion de la conexion a MySQL mediante Peewee.
 - `datos/modelos/orm_models.py`: modelos ORM (persistencia) de las 8 entidades.
-- `repositorios/`: un repositorio por entidad (`ClienteRepositorio`, `EmpleadoRepositorio`,
+- `datos/repositorio/`: un repositorio por entidad (`ClienteRepositorio`, `EmpleadoRepositorio`,
   `RestaurantRepositorio`, `ZonaRepositorio`, `MesaRepositorio`, `DisponibilidadRepositorio`,
   `ReservaRepositorio`), todos heredando operaciones comunes de `BaseRepositorio`.
+- `datos/sql/`: scripts SQL de estructura y datos de ejemplo.
+- `datos/auxiliares/`: utilidades de apoyo.
 
 ### Pruebas
 
@@ -176,7 +178,7 @@ Al cancelar una reserva, el sistema libera la franja de disponibilidad asociada.
 Nombre de la base de datos: `reserva-restaurante`
 
 Administrada mediante MySQL y visualizada/gestionada con phpMyAdmin. La conexion se
-configura en `datos/conexion.py` utilizando Peewee y PyMySQL, con parametros leidos
+configura en `datos/conexion/conexion.py` utilizando Peewee y PyMySQL, con parametros leidos
 desde variables de entorno.
 
 Tablas principales: `usuario`, `cliente`, `empleado`, `restaurant`, `zona`, `mesa`,
@@ -271,8 +273,6 @@ El diagrama de clases del sistema se encuentra en la raiz del repositorio:
 - Anadir servicios de negocio para clientes, empleados, restaurantes, zonas y mesas
   (actualmente solo reservas y disponibilidad pasan explicitamente por la capa de negocio).
 - Implementar autenticacion y autorizacion para las funciones administrativas.
-- Reorganizar `datos/` con subcarpetas internas (repositorio, sql, auxiliares) segun la
-  estructura objetivo de la asignatura.
 
 ## 15. Autoria
 
