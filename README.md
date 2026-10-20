@@ -202,7 +202,7 @@ DB_USER=root
 DB_PASS=tu_password
 SECRET_KEY=una_clave_secreta 
 
-El archivo `.env` no debe subirse al repositorio.
+En este repositorio se incluye el archivo `.env` con la configuracion utilizada en el desarrollo, con fines de revision academica. En un entorno de produccion real no debe subirse al repositorio; se recomienda usar `.env.example` como plantilla.
 
 ### Instalar dependencias
 pip install -r requirements.txt
@@ -254,7 +254,7 @@ transaccion de base de datos (`db.atomic()`), evitando condiciones de carrera.
 
 ## 12. Seguridad y buenas practicas
 
-- Las credenciales se mantienen fuera del codigo fuente, en `.env` (ignorado por git).
+- Las credenciales se gestionan mediante variables de entorno (archivo `.env`), separadas del codigo fuente. En este repositorio academico el `.env` se incluye para facilitar la revision; la buena practica en produccion es mantenerlo fuera del control de versiones mediante `.gitignore` y una plantilla `.env.example`.
 - Se usan consultas del ORM (Peewee) en lugar de SQL concatenado.
 - Las operaciones de escritura relevantes se ejecutan dentro de transacciones.
 - Se mantiene un archivo `.gitignore` para evitar subir archivos temporales, cache de
