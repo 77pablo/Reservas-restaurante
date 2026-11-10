@@ -4,7 +4,6 @@
 
 \*\*Asignatura:\*\* Programación Orientada a Objetos Segura (TI3021)  
 
-\*\*Carrera:\*\* Analista Programador  
 
 \*\*Unidad 2:\*\* Implementación de Software Orientado a Objetos en Python  
 
