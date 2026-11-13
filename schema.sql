@@ -3,9 +3,11 @@ USE ecotech_reservas;
 
 CREATE TABLE usuario (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    rut VARCHAR(12) NOT NULL UNIQUE,
     nombre_completo VARCHAR(150) NOT NULL,
     correo VARCHAR(100) NOT NULL UNIQUE,
     telefono VARCHAR(20),
+    genero VARCHAR(30) NOT NULL,
     contrasena VARCHAR(72) NULL COMMENT 'Hash bcrypt o NULL'
 ) ENGINE = InnoDB;
 

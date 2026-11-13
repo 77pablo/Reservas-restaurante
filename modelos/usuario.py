@@ -1,61 +1,78 @@
 from abc import ABC
-import re
 import bcrypt
+from validaciones import validar_rut, validar_genero
 
 class Usuario(ABC):
-    def __init__(self, nombre_completo, correo, telefono, contrasena=None, id_usuario=None):
+    def __init__(self, nombre_completo, rut, correo, telefono, genero, contrasena=None, id_usuario=None):
         self._id_usuario = id_usuario
-        self.nombre_completo = nombre_completo
-        self.correo = correo
-        self.telefono = telefono
+        self.rut = rut                  # Pasa por el setter que valida con validaciones.py
+        self._nombre_completo = nombre_completo
+        self._correo = correo
+        self._telefono = telefono
+        self.genero = genero            # Pasa por el setter que valida con validaciones.py
         self._contrasena = contrasena
         self._sesion_activa = False
 
     @property
-    def id_usuario(self): return self._id_usuario
+    def id_usuario(self):
+        return self._id_usuario
+
     @id_usuario.setter
-    def id_usuario(self, v): self._id_usuario = v
+    def id_usuario(self, v):
+        self._id_usuario = v
 
     @property
-    def nombre_completo(self): return self._nombre_completo
+    def rut(self):
+        return self._rut
+
+    @rut.setter
+    def rut(self, v):
+        # Valida el RUT usando la función centralizada
+        rut_limpio, mensaje = validar_rut(v)
+        if mensaje != "RUT Válido":
+            raise ValueError(mensaje)
+        self._rut = rut_limpio
+
+    @property
+    def nombre_completo(self):
+        return self._nombre_completo
+
     @nombre_completo.setter
-    def nombre_completo(self, v): self._nombre_completo = v.strip()
+    def nombre_completo(self, v):
+        self._nombre_completo = v.strip()
 
     @property
-    def correo(self): return self._correo
+    def correo(self):
+        return self._correo
+
     @correo.setter
-    def correo(self, v): self._correo = v.strip().lower()
+    def correo(self, v):
+        self._correo = v.strip()
 
     @property
-    def telefono(self): return self._telefono
+    def telefono(self):
+        return self._telefono
+
     @telefono.setter
-    def telefono(self, v): self._telefono = v
+    def telefono(self, v):
+        self._telefono = v
 
     @property
-    def contrasena(self): return self._contrasena
+    def genero(self):
+        return self._genero
+
+    @genero.setter
+    def genero(self, v):
+        # Valida el género usando la función centralizada
+        genero_limpio, mensaje = validar_genero(v)
+        if mensaje != "Género Válido":
+            raise ValueError(mensaje)
+        self._genero = genero_limpio
+
+    @property
+    def contrasena(self):
+        return self._contrasena
+
     @contrasena.setter
-    def contrasena(self, hash_db): self._contrasena = hash_db
-
-    def establecer_contrasena(self, password_plana):
-        if not password_plana or len(password_plana) < 6:
-            raise ValueError("Mínimo 6 caracteres.")
-        salt = bcrypt.gensalt()
-        self._contrasena = bcrypt.hashpw(password_plana.encode('utf-8'), salt).decode('utf-8')
-
-    def iniciar_sesion(self, password_plana):
-        if not self._contrasena: return False
-        try:
-            if bcrypt.checkpw(password_plana.encode('utf-8'), self._contrasena.encode('utf-8')):
-                self._sesion_activa = True
-                return True
-            return False
-        except ValueError:
-            return False
-
-    def cerrar_sesion(self):
-        self._sesion_activa = False
-        return True
-
-    def __str__(self):
-        est = "Con clave" if self._contrasena else "Sin clave"
-        return f"[{self.__class__.__name__}] {self.nombre_completo} <{self.correo}> ({est})"
+    def contrasena(self, v):
+        self._contrasena = v
