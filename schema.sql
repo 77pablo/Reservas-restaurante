@@ -54,6 +54,8 @@ CREATE TABLE mesa (
 CREATE TABLE reserva (
     id_reserva INT AUTO_INCREMENT PRIMARY KEY,
     id_cliente INT NOT NULL,
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     cant_personas INT NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
