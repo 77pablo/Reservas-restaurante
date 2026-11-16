@@ -21,3 +21,19 @@ class BaseRepositorio:
             return None
         finally:
             if conexion and conexion.is_connected(): conexion.close()
+
+    def _consultar(self, sql, parametros=None, uno=False):
+        """SELECT: devuelve un dict (uno=True), una lista de dicts, o None si hubo error."""
+        conexion = None
+        try:
+            conexion = self._conexion_bd.obtener_conexion()
+            cursor = conexion.cursor(dictionary=True)
+            cursor.execute(sql, parametros or ())
+            resultado = cursor.fetchone() if uno else cursor.fetchall()
+            cursor.close()
+            return resultado
+        except Error as error:
+            print(f"[ERROR SQL] {error}")
+            return None
+        finally:
+            if conexion and conexion.is_connected(): conexion.close()
