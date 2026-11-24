@@ -76,3 +76,31 @@ class Usuario(ABC):
     @contrasena.setter
     def contrasena(self, v):
         self._contrasena = v
+
+    def establecer_contrasena(self, clave_plana):
+        if not clave_plana or not isinstance(clave_plana, str):
+            self.contrasena = None
+            return
+
+        hashed = bcrypt.hashpw(clave_plana.encode("utf-8"), bcrypt.gensalt())
+        self.contrasena = hashed.decode("utf-8")
+
+    def iniciar_sesion(self, clave_plana):
+        if not self.contrasena or not clave_plana or not isinstance(clave_plana, str):
+            self._sesion_activa = False
+            return False
+
+        try:
+            es_valida = bcrypt.checkpw(
+                clave_plana.encode("utf-8"),
+                self.contrasena.encode("utf-8"),
+            )
+        except ValueError:
+            self._sesion_activa = False
+            return False
+
+        self._sesion_activa = es_valida
+        return es_valida
+
+    def cerrar_sesion(self):
+        self._sesion_activa = False
