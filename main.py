@@ -10,7 +10,7 @@ def main():
     print("=" * 60)
 
     if not ConexionBD().probar_conexion():
-        print("Revisa tu XAMPP y el archivo .env")
+        print("Revisa tu wamp y el archivo .env")
         return
 
     empleado_repo = EmpleadoRepositorio()
