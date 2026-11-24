@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import Error
 from config.configuracion import Configuracion
 
+
 class ConexionBD:
     def __init__(self):
         self._host = Configuracion.DB_HOST
@@ -12,8 +13,12 @@ class ConexionBD:
 
     def obtener_conexion(self):
         return mysql.connector.connect(
-            host=self._host, port=self._port, database=self._database,
-            user=self._user, password=self._password, charset="utf8mb4"
+            host=self._host,
+            port=self._port,
+            database=self._database,
+            user=self._user,
+            password=self._password,
+            charset="utf8mb4",
         )
 
     def probar_conexion(self):
@@ -21,7 +26,9 @@ class ConexionBD:
         try:
             conexion = self.obtener_conexion()
             if conexion.is_connected():
-                print(f"[OK] Conexión exitosa a MySQL. Versión: {conexion.get_server_info()}")
+                print(
+                    f"[OK] Conexión exitosa a MySQL. Versión: {conexion.get_server_info()}"
+                )
                 return True
             return False
         except Error as error:

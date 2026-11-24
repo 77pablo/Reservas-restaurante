@@ -1,6 +1,7 @@
 from conexion.conexion_bd import ConexionBD
 from modelos.empleado import Empleado
 from repositorios.empleado_repositorio import EmpleadoRepositorio
+from entrada_segura import solicitar_contrasena
 
 
 def main():
@@ -43,7 +44,7 @@ def main():
         if not id_creado:
             print("[ERROR] No se pudo crear el empleado en la base de datos.")
             return
-        print(f"[OK] Empleado creado: {nuevo_empleado}")
+        print(f"[OK] Empleado creado (ID usuario: {nuevo_empleado.id_usuario}, ID empleado: {nuevo_empleado.id_empleado})")
     except Exception as e:
         print(f"[ERROR] No se pudo crear el empleado: {e}")
         return
@@ -53,22 +54,29 @@ def main():
     if not nuevo_empleado.iniciar_sesion("cualquier_clave"):
         print("[OK] Sistema rechazó el login. La clave es NULA.")
 
-    # 3. Establecer contraseña con bcrypt
+    # 3. Establecer contraseña con maskpass + bcrypt
     print("\n--- 3. Usuario establece su contraseña ---")
-    nuevo_empleado.establecer_contrasena("MiSuperClaveSegura2026")
+    nueva_clave = solicitar_contrasena(
+        prompt="Define la contraseña del empleado: ",
+        mask="*",
+        confirmar=True,
+    )
+    nuevo_empleado.establecer_contrasena(nueva_clave)
     empleado_repo.actualizar(nuevo_empleado)
     print("[OK] Contraseña encriptada y guardada en BD.")
     print(f"[HASH BCRYPT GENERADO]: {nuevo_empleado.contrasena}")
 
-    # 4. Pruebas de Login
+    # 4. Pruebas de Login con ingreso oculto
     print("\n--- 4. Pruebas de Login ---")
-    print("Intento con clave incorrecta: '123456'")
-    if not nuevo_empleado.iniciar_sesion("123456"):
-        print("[OK] Login fallido. Acceso denegado.")
-
-    print("Intento con clave correcta: 'MiSuperClaveSegura2026'")
-    if nuevo_empleado.iniciar_sesion("MiSuperClaveSegura2026"):
+    clave_prueba = solicitar_contrasena(
+        prompt="Ingresa la contraseña para iniciar sesión: ",
+        mask="*",
+        confirmar=False,
+    )
+    if nuevo_empleado.iniciar_sesion(clave_prueba):
         print("[OK] Login exitoso. ¡Bienvenido Carlos!")
+    else:
+        print("[OK] Login fallido. Acceso denegado.")
 
 
 if __name__ == "__main__":
